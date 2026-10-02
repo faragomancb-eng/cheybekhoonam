@@ -105,7 +105,7 @@ function bookMeta(book, ctx) {
 }
 
 function people(book) {
-  const t = book.translators.length ? ` · ترجمه‌ی ${listFa(book.translators)}` : (!book.translated ? ' · هنوز ترجمه نشده' : '');
+  const t = book.translators.length ? ` · ترجمه‌ی ${listFa(book.translators)}` : (!book.translated ? ' · ترجمه‌ی فارسی‌اش رو پیدا نکردم' : '');
   return `${book.author}${t}`;
 }
 
@@ -223,6 +223,7 @@ export function sheetView(book, ctx, { item, similar, summary, expanded }) {
         <h2 id="sheet-title" class="sheet__title display">${book.title}</h2>
         ${book.title_en ? html`<p class="sheet__en" dir="ltr" lang="en">${book.title_en}${book.author_en ? ` — ${book.author_en}` : ''}</p>` : ''}
         <p class="card__people">${people(book)}</p>
+        ${book.note ? html`<p class="sheet__note muted">${book.note}</p>` : ''}
         <dl class="facts">
           ${book.pages ? html`<div><dt>حجم</dt><dd>${fa(book.pages)} صفحه · ${readingTime(book.pages, ctx.pph)}<small>${readingPlan(book.pages, ctx.pph)}</small></dd></div>` : ''}
           ${book.year ? html`<div><dt>سال انتشار</dt><dd>${fa(book.year)}</dd></div>` : ''}
