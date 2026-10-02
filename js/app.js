@@ -9,6 +9,7 @@ import { buildVocab, buildCatalog, parseBooksFile } from './core/catalog.js';
 import { compileLexicon, parseIntent, hasContent } from './engine/intent.js';
 import { Recommender } from './engine/recommender.js';
 import { lookupSummary, leadSentences } from './services/summaries.js';
+import { shardOf, shardName } from './core/shard.js';
 import { installCoverFallbacks } from './services/covers.js';
 import { signalKey } from './ui/labels.js';
 import { fa } from './ui/format.js';
@@ -49,22 +50,23 @@ class App {
 
   shelf = { want: [], read: [], nope: [] };
   summaries = new Map();
-  baked = {};
+  covers = {};
+  shards = new Map();
 
   async start() {
     installCoverFallbacks(document);
     this.#bindBackdrop();
     try {
-      const [booksText, vocabText, bakedText, feedText] = await Promise.all([
+      const [booksText, vocabText, coversText, feedText] = await Promise.all([
         fetchText(CONFIG.booksUrl), fetchText(CONFIG.vocabUrl),
-        fetchText(CONFIG.summariesUrl, { optional: true }), fetchText(CONFIG.feedUrl, { optional: true }),
+        fetchText(CONFIG.coversUrl, { optional: true }), fetchText(CONFIG.feedUrl, { optional: true }),
       ]);
       this.vocab = buildVocab(JSON.parse(vocabText));
       const { books, issues } = buildCatalog(parseBooksFile(CONFIG.booksUrl, booksText), this.vocab);
       if (issues.length) console.warn(`books: ${issues.length} مورد قابل بررسی`, issues);
       this.books = books;
       this.byId = new Map(books.map((b) => [b.id, b]));
-      this.baked = bakedText ? JSON.parse(bakedText) : {};
+      this.covers = coversText ? JSON.parse(coversText) : {};
       this.feed = feedText ? JSON.parse(feedText) : [];
     } catch (err) {
       console.error(err);
@@ -113,7 +115,8 @@ class App {
       vocab: this.vocab, byId: this.byId, counts: this.counts, total: this.books.length, parentName: CONFIG.parentName,
       get pph() { return self.pph; },
       shelfState: (id) => (this.shelf.want.includes(id) ? 'want' : this.shelf.read.includes(id) ? 'read' : this.shelf.nope.includes(id) ? 'nope' : null),
-      summaryFor: (id) => this.baked[id] ?? this.summaries.get(id)?.data ?? null,
+      // Cards only need the cover; the full summary arrives when a book is opened.
+      summaryFor: (id) => this.summaries.get(id)?.data ?? (this.covers[id] ? { cover: this.covers[id] } : null),
       summaryState: (id) => this.summaries.get(id),
     };
   }
@@ -250,7 +253,9 @@ class App {
       return st;
     };
     if (book.summary) return done({ text: book.summary, lang: 'fa', source: '' });
-    if (this.baked[book.id]?.text) return done(this.baked[book.id]);
+    this.summaries.set(book.id, { status: 'loading' });
+    const baked = await this.#bakedSummary(book.id);
+    if (baked?.text) return done(baked);
     const cached = storage.get(`sum:${book.id}`);
     if (cached && Date.now() - cached.at < CONFIG.summaryCacheDays * 864e5) return done(cached.data);
     if (!CONFIG.liveSummaries) return done(null);
@@ -259,6 +264,17 @@ class App {
     const data = await lookupSummary(book, { googleApiKey: CONFIG.googleBooksApiKey });
     if (data) storage.set(`sum:${book.id}`, { at: Date.now(), data });
     return done(data);
+  }
+
+  /** Loads the summaries file that holds this book (each file holds ~1/64 of the catalog). */
+  #bakedSummary(id) {
+    const n = shardOf(id);
+    if (!this.shards.has(n)) {
+      this.shards.set(n, fetchText(`${CONFIG.summariesDir}${shardName(n)}`, { optional: true })
+        .then((t) => (t ? JSON.parse(t) : {}))
+        .catch(() => ({})));
+    }
+    return this.shards.get(n).then((map) => map[id] ?? null);
   }
 
   #refreshSummary(id) {

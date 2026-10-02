@@ -9,8 +9,9 @@ export const CONFIG = {
   /** Book list. Either a JSON array (books.json) or a CSV exported from Excel / Google Sheets. */
   booksUrl: './data/books.json',
   vocabUrl: './data/vocab.json',
-  /** Built by tools/prefetch.mjs. Missing file is fine. */
-  summariesUrl: './data/summaries.json',
+  /** Built by tools/prefetch.mjs. Missing files are fine. */
+  coversUrl: './data/covers.json',
+  summariesDir: './data/summaries/',
   feedUrl: './data/feed.json',
 
   /** Live summary lookup in the visitor's browser when a book has no prebuilt summary. */
