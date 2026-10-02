@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>چی بخونم؟ | پیشنهاد کتاب بر اساس حس‌وحالت — فراگمان</title>
+  <meta name="description" content="بنویس امشب دلت چه داستانی می‌خواد؛ «چی بخونم؟» از بین رمان‌های علمی‌تخیلی، فانتزی و وحشت، کتاب مناسب حالت رو پیشنهاد می‌ده.">
+  <meta name="theme-color" content="#0d1426">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fa_IR">
+  <meta property="og:site_name" content="فراگمان">
+  <meta property="og:title" content="چی بخونم؟ — کتاب بعدی‌ات را با حس‌وحالت پیدا کن">
+  <meta property="og:description" content="بنویس دلت چه داستانی می‌خواد؛ ما از قفسه‌ی ادبیات گمانه‌زن برایت پیدایش می‌کنیم.">
+  <meta property="og:image" content="assets/img/og-cover.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preload" href="assets/fonts/Vazirmatn-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/ArefRuqaa-Bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="data/books.json" as="fetch" crossorigin>
+  <link rel="stylesheet" href="css/main.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body class="is-loading">
+  <a class="skip" href="#composer-input">رفتن به جست‌وجو</a>
+
+  <div class="backdrop" aria-hidden="true">
+    <picture>
+      <source media="(max-width: 640px)" srcset="assets/img/hero-night-mobile.webp">
+      <img src="assets/img/hero-night.webp" alt="" fetchpriority="high" width="1584" height="672">
+    </picture>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="چی بخونم؟ صفحه‌ی اصلی">
+      <span class="brand__name display">چی بخونم؟</span>
+      <span class="brand__by">از قفسه‌ی <span>فراگمان</span></span>
+    </a>
+    <button type="button" class="btn btn--ghost topbar__shelf" data-act="open-shelf">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg>
+      <span>قفسه‌ی من</span>
+      <span class="count" id="shelf-count" hidden></span>
+    </button>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <h1 id="hero-title" class="hero__title display">امشب دلت چه داستانی می‌خواد؟</h1>
+      <p class="hero__lead">همون‌طور که به یه دوست کتاب‌خون می‌گی بنویس: حس‌وحالت، چقدر وقت داری، یا کتابی که دوستش داشتی.</p>
+
+      <div class="ask-box">
+        <div class="modes" role="tablist" aria-label="روش پیدا کردن">
+          <button type="button" role="tab" class="modes__tab" data-act="mode" data-mode="write" aria-selected="true" aria-controls="panel-write">بنویسم چی می‌خوام</button>
+          <button type="button" role="tab" class="modes__tab" data-act="mode" data-mode="like" aria-selected="false" aria-controls="panel-like">از روی کتابی که دوست داشتم</button>
+          <button type="button" class="modes__surprise" data-act="surprise">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="4.5" width="15" height="15" rx="3"/><circle cx="9" cy="9" r=".6" fill="currentColor"/><circle cx="15" cy="15" r=".6" fill="currentColor"/><circle cx="15" cy="9" r=".6" fill="currentColor"/><circle cx="9" cy="15" r=".6" fill="currentColor"/></svg>
+            غافلگیرم کن
+          </button>
+        </div>
+
+        <div id="panel-write" role="tabpanel">
+          <form id="composer" class="composer" autocomplete="off">
+            <label for="composer-input" class="sr">بنویس چه کتابی می‌خوای</label>
+            <textarea id="composer-input" rows="2" maxlength="400" placeholder="مثلاً: یه چیز رازآلود و دنج برای شب‌های پاییز، نه خیلی طولانی…"></textarea>
+            <button type="submit" class="btn btn--primary composer__go">پیدا کن</button>
+          </form>
+          <div class="examples" id="examples"></div>
+        </div>
+
+        <div id="panel-like" role="tabpanel" hidden>
+          <div class="like">
+            <label for="like-input" class="sr">اسم کتاب یا نویسنده</label>
+            <input id="like-input" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="like-options" placeholder="اسم کتاب یا نویسنده‌ای که دوستش داشتی…">
+            <ul id="like-options" class="like__options" role="listbox" hidden></ul>
+            <p class="like__hint">می‌تونی چندتا کتاب اضافه کنی؛ پیشنهادها از ترکیبشون درمیاد.</p>
+            <div id="like-chosen" class="like__chosen"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="understood" id="understood" aria-live="polite"></section>
+
+    <details class="picker" id="picker">
+      <summary><span>دقیق‌ترش کن</span><small id="picker-count"></small><small class="picker__hint">حس‌وحال، ژانر، حجم، ریتم و…</small></summary>
+      <div class="picker__body" id="picker-body"></div>
+    </details>
+
+    <section class="results" id="results" aria-live="polite">
+      <div class="skeleton skeleton--results"><span></span><span></span><span></span></div>
+    </section>
+
+    <section class="feed" id="feed" hidden></section>
+  </main>
+
+  <footer class="footer">
+    <p><span class="display">چی بخونم؟</span> بخشی از <a href="https://faragomancb.ir" rel="noopener">فراگمان</a>، پایگاه ادبیات گمانه‌زن.</p>
+    <p class="muted">قفسه و انتخاب‌هات فقط روی همین دستگاه می‌مونه. خلاصه‌ها از ویکی‌پدیا و منابع باز کتاب گرفته می‌شن.</p>
+  </footer>
+
+  <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
+    <div class="sheet__scroll">
+      <button type="button" class="dialog-close" data-act="close" aria-label="بستن">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+      <div id="sheet-body"></div>
+    </div>
+  </dialog>
+
+  <dialog id="shelf" class="sheet sheet--narrow" aria-labelledby="shelf-title">
+    <div class="sheet__scroll">
+      <button type="button" class="dialog-close" data-act="close" aria-label="بستن">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+      <h2 id="shelf-title" class="display sheet__heading">قفسه‌ی من</h2>
+      <div id="shelf-body"></div>
+    </div>
+  </dialog>
+
+  <dialog id="surprise" class="sheet sheet--narrow" aria-labelledby="surprise-title">
+    <div class="sheet__scroll">
+      <button type="button" class="dialog-close" data-act="close" aria-label="بستن">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+      <h2 id="surprise-title" class="display sheet__heading">قرار با یه کتاب ناشناس</h2>
+      <p class="muted">اسم و جلد رو نمی‌بینی؛ فقط چند سرنخ. اگه کنجکاوت کرد، رونماییش کن.</p>
+      <div id="surprise-body"></div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <noscript><p class="noscript">برای پیشنهاد کتاب، جاوااسکریپت مرورگرت باید روشن باشه.</p></noscript>
+</body>
+</html>

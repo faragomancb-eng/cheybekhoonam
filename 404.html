@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>صفحه پیدا نشد | چی بخونم؟</title>
+<style>body{background:#0d1426;color:#f1e7d2;font-family:Vazirmatn,Tahoma,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center}a{color:#f4bd66}</style>
+</head><body><main><h1>این صفحه این‌جا نیست</h1><p><a id="home" href="/">برگشت به «چی بخونم؟»</a></p></main>
+<script>
+  // On project pages (user.github.io/repo/) the site root is the first path segment.
+  if (location.hostname.endsWith('github.io')) document.getElementById('home').href = '/' + (location.pathname.split('/')[1] || '') + '/';
+</script></body></html>
