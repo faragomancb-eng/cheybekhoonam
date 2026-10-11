@@ -21,7 +21,7 @@ const PALETTES = {
   sf: ['#16243a', '#46648a'],
 };
 
-function palette(book) {
+export function palette(book) {
   for (const g of book.genres) if (PALETTES[g]) return PALETTES[g];
   return ['#1b2642', '#4a5a7a'];
 }
