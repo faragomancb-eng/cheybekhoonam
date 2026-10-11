@@ -10,9 +10,10 @@ import { compileLexicon, parseIntent, hasContent } from './engine/intent.js';
 import { Recommender } from './engine/recommender.js';
 import { lookupSummary, leadSentences } from './services/summaries.js';
 import { shardOf, shardName } from './core/shard.js';
-import { installCoverFallbacks } from './services/covers.js';
+import { installCoverFallbacks, coverSources, palette } from './services/covers.js';
+import { tonightPick, nightLabel } from './features/tonight.js';
 import { signalKey } from './ui/labels.js';
-import { fa } from './ui/format.js';
+import { fa, readingTime, listFa } from './ui/format.js';
 import { icon } from './ui/icons.js';
 import * as V from './ui/views.js';
 
@@ -83,14 +84,18 @@ class App {
     this.#restoreFromHash();
     this.#bindEvents();
     this.#renderExamples();
+    this.tonight = tonightPick(this.books);
+    mount($('#tonight'), V.tonightView(this.tonight, this.ctx, { label: nightLabel() }));
     mount($('#feed'), V.feedView(this.feed, this.ctx));
     $('#feed').hidden = !this.feed?.length;
     this.#updateShelfBadge();
     this.update({ reparse: true });
     document.body.classList.remove('is-loading');
 
-    const book = new URLSearchParams(location.hash.slice(1)).get('b');
+    const hash = new URLSearchParams(location.hash.slice(1));
+    const book = hash.get('b');
     if (book && this.byId.has(book)) this.openBook(book);
+    else if (hash.has('tonight') && this.tonight) this.openBook(this.tonight.id);
   }
 
   /* ---------- derived data ---------- */
@@ -166,6 +171,7 @@ class App {
     }));
     this.renderPicker();
     this.renderResults();
+    $('#tonight').hidden = !this.tonight || this.result.hasQuery;
     this.#writeHash();
     const first = this.result.items[0];
     if (first && this.result.hasQuery) this.ensureSummary(first.book);
@@ -281,6 +287,33 @@ class App {
     const node = $(`[data-summary-for="${CSS.escape(id)}"]`);
     if (node) mount(node, V.summaryPreview(this.summaries.get(id)));
     if ($('#sheet').open && this.openId === id) mount($('.sheet__summary'), V.sheetSummary(this.summaries.get(id), this.expanded));
+  }
+
+  /* ---------- story card ---------- */
+
+  async storyCard(id, source) {
+    const book = this.byId.get(id);
+    if (!book) return;
+    const text = this.state.text.trim();
+    const quote = source === 'pick' && text && text.length <= 90 ? text : '';
+    const kicker = source === 'tonight' ? `کتاب امشب · ${nightLabel()}` : quote ? 'امشب حالم این بود:' : 'کتاب امشب من';
+    const link = new URL(location.href);
+    link.hash = `b=${id}`;
+    const card = {
+      id, kicker, quote,
+      title: book.title.replace(/\s*\(.*\)\s*/, ''),
+      author: book.author,
+      translators: listFa(book.translators.slice(0, 2)),
+      chips: book.moods.slice(0, 3).map((m) => this.vocab.moods.byId.get(m)?.label ?? m),
+      meta: [book.pages ? `${fa(book.pages)} صفحه` : '', book.pages ? readingTime(book.pages, this.pph) : '', book.year ? fa(book.year) : ''].filter(Boolean).join(' · '),
+      coverSources: coverSources(book, this.ctx.summaryFor(id)),
+      palette: palette(book),
+      backdrop: 'assets/img/hero-night-mobile.webp',
+      url: location.host || 'chi.faragomancb.ir',
+      shareText: `«${book.title}» از ${book.author} — ${kicker.replace(/:$/, '')}\n${link}`,
+    };
+    const { openStoryCard } = await import('./features/story.js');
+    openStoryCard(card, { toast: (m) => this.toast(m) });
   }
 
   /* ---------- dialogs ---------- */
@@ -572,6 +605,7 @@ class App {
         return this.copy(url.toString(), 'لینک کتاب کپی شد.');
       }
       case 'expand-summary': this.expanded = !this.expanded; return mount($('.sheet__summary'), V.sheetSummary(this.summaries.get(this.openId), this.expanded));
+      case 'story': return this.storyCard(id, kind);
       case 'surprise': return this.openSurprise();
       case 'reveal': this.revealed = true; return this.renderSurprise();
       case 'another': return this.openSurprise();
