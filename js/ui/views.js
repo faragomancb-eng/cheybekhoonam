@@ -159,10 +159,33 @@ export function topPickView(item, ctx) {
       <div class="top__summary" data-summary-for="${b.id}">${summaryPreview(ctx.summaryState(b.id))}</div>
       <div class="top__actions">
         <button type="button" class="btn btn--primary" data-act="open" data-id="${b.id}">بیشتر درباره‌ش ${icon('arrow', { size: 18 })}</button>
+        <button type="button" class="btn btn--ghost" data-act="story" data-id="${b.id}" data-kind="pick">${STORY_ICON}<span>کارت استوری</span></button>
         ${shelfButtons(b, ctx)}
       </div>
     </div>
   </article>`;
+}
+
+/* ---------- Tonight's book ---------- */
+
+const STORY_ICON = html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10 18.5h4"/></svg>`;
+
+export function tonightView(book, ctx, { label }) {
+  if (!book) return '';
+  const moods = book.moods.slice(0, 3).map((m) => ctx.vocab.moods.byId.get(m)?.label ?? m);
+  return html`<div class="tonight__card">
+    <button type="button" class="tonight__cover" data-act="open" data-id="${book.id}" aria-label="جزئیات ${book.title}">${coverView(book, ctx.summaryFor(book.id), { size: 'sm', eager: true })}</button>
+    <div class="tonight__body">
+      <p class="tonight__kicker"><span class="tonight__moon" aria-hidden="true">☾</span> کتاب امشب${label ? html` · <span>${label}</span>` : ''}</p>
+      <h2 class="tonight__title display">${book.title}</h2>
+      <p class="card__people">${people(book)}</p>
+      <p class="tonight__moods">${moods.join(' · ')}${book.pages ? ` · ${fa(book.pages)} صفحه` : ''}</p>
+      <div class="tonight__actions">
+        <button type="button" class="btn btn--primary" data-act="open" data-id="${book.id}">بیشتر درباره‌ش</button>
+        <button type="button" class="btn btn--ghost" data-act="story" data-id="${book.id}" data-kind="tonight">${STORY_ICON}<span>کارت استوری</span></button>
+      </div>
+    </div>
+  </div>`;
 }
 
 export function summaryPreview(state) {
@@ -243,6 +266,7 @@ export function sheetView(book, ctx, { item, similar, summary, expanded }) {
         ${book.warnings.length ? html`<details class="warn"><summary>${icon('warning', { size: 16 })} هشدار محتوا (بدون لو رفتن داستان)</summary><p>${book.warnings.map((w) => label('warnings', w)).join('، ')}</p></details>` : ''}
         <div class="sheet__actions">
           <button type="button" class="btn btn--primary" data-act="like-this" data-id="${book.id}">شبیه این پیدا کن</button>
+          <button type="button" class="btn btn--ghost" data-act="story" data-id="${book.id}" data-kind="book">${STORY_ICON}<span>کارت استوری</span></button>
           <button type="button" class="btn btn--ghost" data-act="copy-book" data-id="${book.id}">${icon('link', { size: 18 })}<span>لینک این کتاب</span></button>
           ${book.link ? html`<a class="btn btn--ghost" href="${book.link}" target="_blank" rel="noopener">${icon('book', { size: 18 })}<span>تهیه‌ی کتاب</span></a>` : ''}
         </div>
