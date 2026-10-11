@@ -34,7 +34,7 @@ const POST_NEGATORS = new Set([
 const SOFTENERS = new Set(['خیلی', 'زیاد', 'چندان', 'اونقدر', 'آنقدر', 'چندون', 'too', 'very']);
 const INTENSIFIERS = new Set(['خیلی', 'شدیدا', 'واقعا', 'حسابی', 'بشدت', 'کاملا', 'حتما', 'خفن', 'اصلا', 'really', 'very']);
 const DIMINISHERS = new Set(['یکم', 'کمی', 'نسبتا', 'یخورده', 'ذره', 'somewhat', 'bit']);
-const REFERENCE_CUES = new Set(['مثل', 'شبیه', 'فیلم', 'سریال', 'هوای', 'سبک', 'مثه', 'عین', 'like', 'film', 'movie']);
+const REFERENCE_CUES = new Set(['مثل', 'شبیه', 'مایه', 'مایههای', 'فیلم', 'سریال', 'هوای', 'سبک', 'مثه', 'عین', 'like', 'film', 'movie']);
 const CLAUSE_BREAKS = new Set(['ولی', 'اما', 'ولیکن', 'but', 'however']);
 const STOPWORDS = new Set(['یه', 'یک', 'کتاب', 'میخوام', 'می', 'خوام', 'که', 'و', 'با', 'از', 'به', 'در', 'رو', 'را', 'باشه', 'چیز', 'داستان', 'رمان', 'من', 'برام', 'برای', 'دارم', 'هست', 'باشد', 'مثل', 'شبیه', 'ای', 'این', 'اون', 'یا', 'هم', 'تا', 'the', 'a', 'book', 'like']);
 
@@ -46,6 +46,15 @@ const NUMBER_RULES = [
   { re: /(?:^|\s)(یک|یه|دو|سه|چهار|پنج|شش|هفت|هشت|ده)\s*ساعت/, kind: 'hours', words: true },
 ];
 const NUMBER_WORDS = { یک: 1, یه: 1, دو: 2, سه: 3, چهار: 4, پنج: 5, شش: 6, هفت: 7, هشت: 8, ده: 10 };
+
+// One-word titles that are also everyday words; they count as a book only after a cue («مثل جاده»).
+const COMMON_TITLE_WORDS = new Set('شیر نگهبانان روبات ربات کوری جاده ایستادگی سنتز زندگی سلول بخشنده مرگ سرود پسرم تسلیم شورشی تماس جزیره رویا عدن راهب همگرا شخصیت غریبه دروازه ستارگان طعمه چرخش شهر کره مدار فردا برگزیده دیوار وارثان زخم ملت هذیان دسته تونل ناهنجاری افسونگر اقتدار شاخها دایره افشا سیل سرگردان سرمازدگی گذرگاه چنگال جهنده بیداری همیشه پذیرش گوشت محور لوپ ردپا تکرار قرنطینه محافظ بالها کشمکش کوچک بزرگ پریشانی زمین افسوس امگا کلک ابدیت برادری شرق مومیایی گلخانه مقصد پیدایش هزاره میراث طلسم نگهبان ستاره گفتن حافظه تحقیق بعدی نیمروز افراط ساحر شبح پیرامونی موهبتها نوا یادگار بازسازی علف گرداب آوردگاه درخشان گنجشک استتار آتش سوخته حیوانی افعی تبعید جادوگران جادوگرها خشم تاریک سیاه صعود نامحتمل ابرذهن مریخی مریخیها کسوف اشتعال میزبان مسخ نابودی بنیاد فضانوردان کیمیاگر life contact island city eden prey spin tomorrow chosen fire next memory nation legend eternity loop raft gateway authority acceptance revelation wings marked flesh exile burned grass arena nova passage relic remake job noon micro phantom gifts ascent improbable eclipse anthem robot cell flyte east genesis millennium babel orbital sphere axis replay protector quarantine midnight hush titan legend'.split(' ').map((w) => normalize(w)));
+const commonCache = new WeakMap();
+/** Single-token words used by the lexicon (moods, genres, …): too generic to be read as a book title on their own. */
+function commonWords(lexicon) {
+  if (!commonCache.has(lexicon)) commonCache.set(lexicon, new Set(lexicon.filter((e) => e.tokens.length === 1).map((e) => e.tokens[0])));
+  return commonCache.get(lexicon);
+}
 
 function aliasTokens(text) {
   const exact = text.startsWith('=');
@@ -157,6 +166,8 @@ export function parseIntent(input, { lexicon, books = [], strategies = {} }) {
         const pat = alias.split(' ');
         for (let i = 0; i < toks.length; i++) {
           if (matchAt(toks, i, pat, true) || (pat.length > 1 && toks[i] === pat.join(''))) {
+            // One-word titles that are also ordinary vocabulary («تاریک», «آتش») need a cue like «مثل».
+            if (pat.length === 1 && (commonWords(lexicon).has(pat[0]) || COMMON_TITLE_WORDS.has(pat[0])) && !toks.slice(Math.max(0, i - 3), i).some((t) => REFERENCE_CUES.has(t))) continue;
             claim(i, toks[i] === pat.join('') ? 1 : pat.length, { kind: 'seed', id: book.id, label: book.title });
           }
         }
