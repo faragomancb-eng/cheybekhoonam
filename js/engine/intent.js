@@ -39,16 +39,22 @@ const CLAUSE_BREAKS = new Set(['ولی', 'اما', 'ولیکن', 'but', 'however
 const STOPWORDS = new Set(['یه', 'یک', 'کتاب', 'میخوام', 'می', 'خوام', 'که', 'و', 'با', 'از', 'به', 'در', 'رو', 'را', 'باشه', 'چیز', 'داستان', 'رمان', 'من', 'برام', 'برای', 'دارم', 'هست', 'باشد', 'مثل', 'شبیه', 'ای', 'این', 'اون', 'یا', 'هم', 'تا', 'the', 'a', 'book', 'like']);
 
 const NUMBER_RULES = [
-  { re: /(زیر|کمتر از|کمتر|حداکثر|نهایتا|ماکزیمم|تا|under|max)\s*(\d{2,4})\s*(صفحه|ص|pages?)?/, kind: 'max' },
-  { re: /(بالای|بیشتر از|بیش از|حداقل|over|min)\s*(\d{2,4})\s*(صفحه|ص|pages?)?/, kind: 'min' },
-  { re: /(\d{2,4})\s*(صفحه|pages)/, kind: 'around' },
-  { re: /(\d{1,2})\s*ساعت/, kind: 'hours' },
-  { re: /(?:^|\s)(یک|یه|دو|سه|چهار|پنج|شش|هفت|هشت|ده)\s*ساعت/, kind: 'hours', words: true },
+  { re: /(زیر|کمتر از|کمتر|حداکثر|نهایتا|ماکزیمم|تا|under|max)\s*(\d{2,5})\s*(چپتر|فصل|chapters?)/, kind: 'max', unit: 'chapters' },
+  { re: /(بالای|بیشتر از|بیش از|حداقل|over|min)\s*(\d{2,5})\s*(چپتر|فصل|chapters?)/, kind: 'min', unit: 'chapters' },
+  { re: /(\d{2,5})\s*(چپتر|فصل|chapters?)/, kind: 'around', unit: 'chapters' },
+  { re: /(زیر|کمتر از|کمتر|حداکثر|نهایتا|ماکزیمم|تا|under|max)\s*(\d{1,3})\s*(جلد|volumes?|vols?)/, kind: 'max', unit: 'volumes' },
+  { re: /(بالای|بیشتر از|بیش از|حداقل|over|min)\s*(\d{1,3})\s*(جلد|volumes?|vols?)/, kind: 'min', unit: 'volumes' },
+  { re: /(\d{1,3})\s*(جلد|volumes?|vols?)/, kind: 'around', unit: 'volumes' },
+  { re: /(زیر|کمتر از|کمتر|حداکثر|نهایتا|ماکزیمم|تا|under|max)\s*(\d{2,4})\s*(صفحه|ص|pages?)?/, kind: 'max', unit: 'pages' },
+  { re: /(بالای|بیشتر از|بیش از|حداقل|over|min)\s*(\d{2,4})\s*(صفحه|ص|pages?)?/, kind: 'min', unit: 'pages' },
+  { re: /(\d{2,4})\s*(صفحه|pages)/, kind: 'around', unit: 'pages' },
+  { re: /(\d{1,2})\s*ساعت/, kind: 'hours', unit: 'pages' },
+  { re: /(?:^|\s)(یک|یه|دو|سه|چهار|پنج|شش|هفت|هشت|ده)\s*ساعت/, kind: 'hours', words: true, unit: 'pages' },
 ];
 const NUMBER_WORDS = { یک: 1, یه: 1, دو: 2, سه: 3, چهار: 4, پنج: 5, شش: 6, هفت: 7, هشت: 8, ده: 10 };
 
 // One-word titles that are also everyday words; they count as a book only after a cue («مثل جاده»).
-const COMMON_TITLE_WORDS = new Set('شیر نگهبانان روبات ربات کوری جاده ایستادگی سنتز زندگی سلول بخشنده مرگ سرود پسرم تسلیم شورشی تماس جزیره رویا عدن راهب همگرا شخصیت غریبه دروازه ستارگان طعمه چرخش شهر کره مدار فردا برگزیده دیوار وارثان زخم ملت هذیان دسته تونل ناهنجاری افسونگر اقتدار شاخها دایره افشا سیل سرگردان سرمازدگی گذرگاه چنگال جهنده بیداری همیشه پذیرش گوشت محور لوپ ردپا تکرار قرنطینه محافظ بالها کشمکش کوچک بزرگ پریشانی زمین افسوس امگا کلک ابدیت برادری شرق مومیایی گلخانه مقصد پیدایش هزاره میراث طلسم نگهبان ستاره گفتن حافظه تحقیق بعدی نیمروز افراط ساحر شبح پیرامونی موهبتها نوا یادگار بازسازی علف گرداب آوردگاه درخشان گنجشک استتار آتش سوخته حیوانی افعی تبعید جادوگران جادوگرها خشم تاریک سیاه صعود نامحتمل ابرذهن مریخی مریخیها کسوف اشتعال میزبان مسخ نابودی بنیاد فضانوردان کیمیاگر life contact island city eden prey spin tomorrow chosen fire next memory nation legend eternity loop raft gateway authority acceptance revelation wings marked flesh exile burned grass arena nova passage relic remake job noon micro phantom gifts ascent improbable eclipse anthem robot cell flyte east genesis millennium babel orbital sphere axis replay protector quarantine midnight hush titan legend'.split(' ').map((w) => normalize(w)));
+const COMMON_TITLE_WORDS = new Set('شیر نگهبانان روبات ربات کوری جاده ایستادگی سنتز زندگی سلول بخشنده مرگ سرود پسرم تسلیم شورشی تماس جزیره رویا عدن راهب همگرا شخصیت غریبه دروازه ستارگان طعمه چرخش شهر کره مدار فردا برگزیده دیوار وارثان زخم ملت هذیان دسته تونل ناهنجاری افسونگر اقتدار شاخها دایره افشا سیل سرگردان سرمازدگی گذرگاه چنگال جهنده بیداری همیشه پذیرش گوشت محور لوپ ردپا تکرار قرنطینه محافظ بالها کشمکش کوچک بزرگ پریشانی زمین افسوس امگا کلک ابدیت برادری شرق مومیایی گلخانه مقصد پیدایش هزاره میراث طلسم نگهبان ستاره گفتن حافظه تحقیق بعدی نیمروز افراط ساحر شبح پیرامونی موهبتها نوا یادگار بازسازی علف گرداب آوردگاه درخشان گنجشک استتار آتش سوخته حیوانی افعی تبعید جادوگران جادوگرها خشم تاریک سیاه صعود نامحتمل ابرذهن مریخی مریخیها کسوف اشتعال میزبان مسخ نابودی بنیاد فضانوردان کیمیاگر ارباب شکارچی سایه برج خواننده جنگجو پادشاه امپراتور اژدها شیطان شمشیر اکسیر جاودانگی معجون سرنوشت انتقام بازگشت سقوط بیداری تنهایی مه سکوت طوفان life contact island city eden prey spin tomorrow chosen fire next memory nation legend eternity loop raft gateway authority acceptance revelation wings marked flesh exile burned grass arena nova passage relic remake job noon micro phantom gifts ascent improbable eclipse anthem robot cell flyte east genesis millennium babel orbital sphere axis replay protector quarantine midnight hush titan overlord solo shadow tower another mist guardian reader hunter reaper lucia passion turning isaac gamers slayers'.split(' ').map((w) => normalize(w)));
 const commonCache = new WeakMap();
 /** Single-token words used by the lexicon (moods, genres, …): too generic to be read as a book title on their own. */
 function commonWords(lexicon) {
@@ -66,8 +72,11 @@ function aliasTokens(text) {
 export function compileLexicon(vocab) {
   const entries = [];
   const add = (kind, id, label, tokens, exact) => { if (tokens.length) entries.push({ kind, id, label, tokens, exact }); };
-  for (const [kind, group] of [['mood', 'moods'], ['genre', 'genres'], ['theme', 'themes'], ['warning', 'warnings'], ['format', 'formats']]) {
-    for (const e of vocab[group].list) {
+  for (const [kind, group] of [
+    ['mood', 'moods'], ['genre', 'genres'], ['theme', 'themes'], ['warning', 'warnings'], ['format', 'formats'],
+    ['origin', 'origins'], ['status', 'statuses'], ['adaptation', 'adaptations'],
+  ]) {
+    for (const e of vocab[group]?.list ?? []) {
       for (const a of e.aliases) add(kind, e.id, e.label, a.text.split(' '), a.exact);
       add(kind, e.id, e.label, normalize(e.label, { stripPunctuation: true }).split(' '), false);
     }
@@ -133,19 +142,20 @@ export function parseIntent(input, { lexicon, books = [], strategies = {} }) {
     }
   }
 
-  // 2) Numbers (pages / hours).
-  let pagesFound = false;
+  // 2) Numbers (pages / hours / chapters / volumes).
+  const foundUnits = new Set();
   for (const rule of NUMBER_RULES) {
-    if (pagesFound && rule.kind !== 'hours') continue;
+    if (foundUnits.has(rule.unit) && rule.kind !== 'hours') continue;
     if (rule.kind === 'hours' && signals.some((x) => x.note)) continue;
     const m = masked.match(rule.re);
     if (!m) continue;
     const n = rule.words ? NUMBER_WORDS[m[1]] : Number(rule.kind === 'max' || rule.kind === 'min' ? m[2] : m[1]);
     if (!Number.isFinite(n)) continue;
+    const minVal = rule.unit === 'volumes' ? 1 : rule.unit === 'chapters' ? 10 : 50;
     if (rule.kind === 'hours') signals.push({ kind: 'pages', id: `max:${Math.max(n * 45, 220)}`, polarity: 1, strength: 0.8, hard: false, note: `${n} ساعت` });
-    else if (rule.kind === 'around') signals.push({ kind: 'pages', id: `around:${n}`, polarity: 1, strength: 1 });
-    else if (n >= 50) signals.push({ kind: 'pages', id: `${rule.kind}:${n}`, polarity: 1, strength: 1, hard: true });
-    pagesFound = rule.kind !== 'hours';
+    else if (rule.kind === 'around' && n >= minVal) signals.push({ kind: rule.unit, id: `around:${n}`, polarity: 1, strength: 1 });
+    else if (n >= minVal) signals.push({ kind: rule.unit, id: `${rule.kind}:${n}`, polarity: 1, strength: 1, hard: true });
+    if (rule.kind !== 'hours') foundUnits.add(rule.unit);
     masked = masked.slice(0, m.index) + ' '.repeat(m[0].length) + masked.slice(m.index + m[0].length);
   }
 

@@ -7,15 +7,15 @@
  */
 import { normalize, splitAliases } from './text.js';
 
-const LIST_FIELDS = ['translators', 'genres', 'moods', 'themes', 'warnings', 'films', 'awards'];
-const VOCAB_FIELDS = { genres: 'genres', moods: 'moods', themes: 'themes', warnings: 'warnings' };
+const LIST_FIELDS = ['translators', 'genres', 'moods', 'themes', 'warnings', 'films', 'awards', 'adaptations', 'alt_titles'];
+const VOCAB_FIELDS = { genres: 'genres', moods: 'moods', themes: 'themes', warnings: 'warnings', adaptations: 'adaptations' };
 const SCALE_FIELDS = ['pace', 'darkness', 'complexity'];
 const ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 
 /** Builds fast lookup structures over vocab.json. */
 export function buildVocab(raw) {
   const groups = {};
-  for (const key of ['moods', 'genres', 'themes', 'warnings', 'formats', 'audiences']) {
+  for (const key of ['moods', 'genres', 'themes', 'warnings', 'formats', 'audiences', 'origins', 'statuses', 'adaptations']) {
     const list = Array.isArray(raw?.[key]) ? raw[key] : [];
     const byId = new Map();
     for (const entry of list) {
@@ -82,9 +82,10 @@ export function buildCatalog(rows, vocab) {
     for (const f of LIST_FIELDS) book[f] = toList(raw[f]);
 
     for (const [field, group] of Object.entries(VOCAB_FIELDS)) {
+      if (!vocab[group]?.list.length && book[field].length === 0) continue;
       const known = [];
       for (const tag of book[field]) {
-        if (vocab[group].byId.has(tag)) known.push(tag);
+        if (vocab[group]?.byId.has(tag)) known.push(tag);
         else report('warning', field, `«${tag}» در vocab.json تعریف نشده و نادیده گرفته شد.`);
       }
       book[field] = [...new Set(known)];
@@ -92,7 +93,7 @@ export function buildCatalog(rows, vocab) {
     if (book.genres.length === 0) report('warning', 'genres', 'هیچ ژانری ندارد؛ در پیشنهادها ضعیف دیده می‌شود.');
     if (book.moods.length === 0) report('warning', 'moods', 'هیچ حس‌وحالی ندارد؛ در پیشنهادها ضعیف دیده می‌شود.');
 
-    for (const f of ['year', 'pages', 'series_number']) {
+    for (const f of ['year', 'pages', 'series_number', 'chapters', 'volumes']) {
       const n = toNumber(raw[f]);
       if (Number.isNaN(n)) report('warning', f, `مقدار «${raw[f]}» عدد نیست.`);
       book[f] = Number.isFinite(n) ? n : null;
@@ -106,9 +107,20 @@ export function buildCatalog(rows, vocab) {
       } else book[f] = Math.round(n);
     }
 
+    if (raw.origin != null && raw.origin !== '') {
+      const orig = String(raw.origin).trim();
+      if (vocab.origins?.byId.has(orig)) book.origin = orig;
+      else { report('warning', 'origin', `خاستگاه «${orig}» ناشناخته است.`); book.origin = ''; }
+    } else book.origin = '';
+    if (raw.status != null && raw.status !== '') {
+      const st = String(raw.status).trim();
+      if (vocab.statuses?.byId.has(st)) book.status = st;
+      else { report('warning', 'status', `وضعیت «${st}» ناشناخته است.`); book.status = ''; }
+    } else book.status = '';
+
     book.audience = vocab.audiences.byId.has(raw.audience) ? raw.audience : 'adult';
     if (raw.audience && !vocab.audiences.byId.has(raw.audience)) report('warning', 'audience', `مخاطب «${raw.audience}» ناشناخته است؛ بزرگسال در نظر گرفته شد.`);
-    book.format = vocab.formats.byId.has(raw.format) ? raw.format : 'novel';
+    book.format = vocab.formats.byId.has(raw.format) ? raw.format : (book.origin ? 'webnovel' : 'novel');
     book.translated = toBool(raw.translated, book.translators.length > 0);
     book.featured = toBool(raw.featured, false);
     book.isbn = raw.isbn ? String(raw.isbn).replace(/[^0-9Xx]/g, '') : '';
@@ -128,12 +140,13 @@ export function buildCatalog(rows, vocab) {
     // Precomputed matching data (not part of the public schema).
     const titleAliases = new Set([
       ...splitAliases(book.title), ...splitAliases(book.title_en),
+      ...book.alt_titles.flatMap(splitAliases),
       ...(book.series ? splitAliases(book.series) : []),
     ]);
     book._aliases = [...titleAliases].filter((a) => a.length >= 3);
     book._films = book.films.flatMap(splitAliases).filter((a) => a.length >= 3);
     book._haystack = normalize([
-      book.title, book.title_en, book.author, book.author_en, book.series,
+      book.title, book.title_en, ...book.alt_titles, book.author, book.author_en, book.series,
       ...book.translators, ...book.films,
     ].join(' '), { stripPunctuation: true });
     books.push(book);

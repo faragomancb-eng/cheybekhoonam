@@ -4,7 +4,7 @@
  *  - fonts, images, css, js: stale-while-revalidate
  * Bump VERSION when you change this file's strategy; normal content edits don't need it.
  */
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = `chibekhoonam-${VERSION}`;
 const CORE = ['./', './index.html', './css/main.css', './js/app.js', './data/books.json', './data/vocab.json', './assets/img/hero-night.webp'];
 

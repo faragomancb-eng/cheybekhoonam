@@ -6,6 +6,7 @@
 // Usage: npm run prefetch [-- --limit=500] [-- --minutes=40] [-- --force] [-- --only=dune,piranesi] [-- --retry-missing]
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { loadCatalog, readJson, root } from './lib.mjs';
 import { lookupSummary } from '../js/services/summaries.js';
 import { SHARDS, shardOf, shardName } from '../js/core/shard.js';
@@ -20,7 +21,7 @@ const deadline = Date.now() + Number(opt('minutes', process.env.PREFETCH_MINUTES
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const dir = path.join(root, 'data/summaries');
 const coversFile = path.join(root, 'data/covers.json');
-const { CONFIG } = await import(path.join(root, 'js/config.js'));
+const { CONFIG } = await import(pathToFileURL(path.join(root, 'js/config.js')).href);
 const FEED_URL = process.env.FEED_URL ?? `${CONFIG.parentUrl.replace(/\/$/, '')}/feed`;
 
 const { books } = await loadCatalog();

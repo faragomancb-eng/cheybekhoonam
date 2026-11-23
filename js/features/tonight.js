@@ -26,10 +26,13 @@ function fnv(str) {
   return h >>> 0;
 }
 
-/** Books that can be «tonight's book»: translated and complete enough to present. */
+/** Books (or Eastern novels) that can be «tonight's pick»: complete enough to present. */
 export function tonightPool(books) {
+  const isNovels = books.length > 0 && books.every((b) => Boolean(b.origin));
   return books
-    .filter((b) => b.translated && b.translators.length && b.pages && b.moods.length)
+    .filter((b) => (isNovels
+      ? (b.origin && (b.chapters || b.volumes) && b.moods.length)
+      : (b.translated && b.translators.length && b.pages && b.moods.length)))
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 

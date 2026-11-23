@@ -17,20 +17,56 @@ import { fa, readingTime, listFa } from './ui/format.js';
 import { icon } from './ui/icons.js';
 import * as V from './ui/views.js';
 
-const SINGLE_KINDS = new Set(['length', 'pages', 'pace', 'darkness', 'complexity', 'audience', 'translated']);
-const EXAMPLES = [
-  'یه چیز تاریک و فلسفی، ولی نه خیلی طولانی',
-  'خسته‌ام؛ یه چیز سبک و بامزه می‌خوام',
-  'شبیه تل‌ماسه، ولی کوتاه‌تر',
-  'فانتزی گرم برای پسر نوجوانم، بدون عنکبوت!',
-  'علمی‌تخیلی با بیگانه‌ها که فکرم رو درگیر کنه',
-  'یه داستان رازآلود که نتونم زمین بذارمش',
-  'حال‌وهوای بلید رانر',
-  'دلم گرفته',
-  'فقط ۵ ساعت وقت دارم',
-  'یه چیزی از لوگویین',
-  'بدون جادو، پرتعلیق، زیر ۴۰۰ صفحه',
-];
+const SINGLE_KINDS = new Set(['length', 'pages', 'chapters', 'volumes', 'pace', 'darkness', 'complexity', 'audience', 'translated', 'status']);
+const EASTERN_HINT_RE = /(شیان\s*شیا|شوان\s*هوان|ووشیا|موریم|ایسکای|لایت\s*ناول|وب\s*ناول|دنمی|اوتومه|دونگهوا|مانهوا|رگرسیون|کالتیویشن|تزکیه|سولو\s*لولینگ|ارباب\s*اسرار|دیدگاه\s*خواننده|جنون\s*کشیش|موشوکو|کونوسوبا|\b(?:lotm|orv|mdzs|tgcf|xianxia|xuanhuan|wuxia|murim|isekai|danmei|manhwa|donghua|litrpg|webnovel|light novel)\b)/i;
+
+const SECTIONS = {
+  books: {
+    heroTitle: 'امشب دلت چه داستانی می‌خواد؟',
+    heroLead: 'همون‌طور که به یه دوست کتاب‌خون می‌گی بنویس: حس‌وحالت، چقدر وقت داری، یا کتابی که دوستش داشتی.',
+    placeholder: 'مثلاً: یه چیز رازآلود و دنج برای شب‌های پاییز، نه خیلی طولانی…',
+    likeTab: 'از روی کتابی که دوست داشتم',
+    likePlaceholder: 'اسم کتاب یا نویسنده‌ای که دوستش داشتی…',
+    likeHint: 'می‌تونی چندتا کتاب اضافه کنی؛ پیشنهادها از ترکیبشون درمیاد.',
+    pickerHint: 'حس‌وحال، ژانر، حجم، ریتم و…',
+    surpriseTitle: 'قرار با یه کتاب ناشناس',
+    examples: [
+      'یه چیز تاریک و فلسفی، ولی نه خیلی طولانی',
+      'خسته‌ام؛ یه چیز سبک و بامزه می‌خوام',
+      'شبیه تل‌ماسه، ولی کوتاه‌تر',
+      'فانتزی گرم برای پسر نوجوانم، بدون عنکبوت!',
+      'علمی‌تخیلی با بیگانه‌ها که فکرم رو درگیر کنه',
+      'یه داستان رازآلود که نتونم زمین بذارمش',
+      'حال‌وهوای بلید رانر',
+      'دلم گرفته',
+      'فقط ۵ ساعت وقت دارم',
+      'یه چیزی از لوگویین',
+      'بدون جادو، پرتعلیق، زیر ۴۰۰ صفحه',
+    ],
+  },
+  novels: {
+    heroTitle: 'امشب دلت چه ناول شرقی می‌خواد؟',
+    heroLead: 'بنویس دنبال چه دنیایی هستی: شیان‌شیا، موریم، ایسکای، سیستم و دانجن، چینی یا کره‌ای، تموم‌شده یا شبیه ناولی که دوستش داشتی.',
+    placeholder: 'مثلاً: یه شیان‌شیای تاریک با شخصیت اصلی باهوش، پایان‌یافته…',
+    likeTab: 'از روی ناولی که دوست داشتم',
+    likePlaceholder: 'اسم ناول، مخفف (مثل LOTM یا ORV) یا نویسنده…',
+    likeHint: 'می‌تونی چندتا ناول اضافه کنی؛ پیشنهادها از ترکیبشون درمیاد.',
+    pickerHint: 'خاستگاه، ژانر شرقی، وضعیت، حجم، اقتباس و…',
+    surpriseTitle: 'قرار با یه ناول ناشناس',
+    examples: [
+      'یه شیان‌شیای تاریک با شخصیت اصلی باهوش',
+      'شبیه ارباب اسرار، ولی کوتاه‌تر',
+      'کره‌ای با سیستم و دانجن، پایان‌یافته',
+      'موریم پرهیجان و خنده‌دار',
+      'ایسکای ژاپنی دنج و بدون خشونت',
+      'مثل سولو لولینگ، مانهوا داشته باشه',
+      'ناول چینی معمایی و وهم‌آلود',
+      'دلم گرفته؛ یه برش زندگی ژاپنی آروم',
+      'ضدقهرمان بی‌رحم و استراتژیست',
+      'بازگشت در زمان و انتقام، زیر ۵۰۰ چپتر',
+    ],
+  },
+};
 
 async function fetchText(url, { optional = false } = {}) {
   try {
@@ -44,6 +80,10 @@ async function fetchText(url, { optional = false } = {}) {
 }
 
 class App {
+  section = 'books';
+  catalogs = { books: null, novels: null };
+  allById = new Map();
+  allCovers = {};
   state = {
     text: '', parsed: { signals: [], states: [] }, dropped: new Set(), picks: new Map(), strategies: {},
     likes: [], shuffle: 0, shown: CONFIG.pageSize, showAllThemes: false, mode: 'write',
@@ -62,12 +102,7 @@ class App {
         fetchText(CONFIG.booksUrl), fetchText(CONFIG.vocabUrl),
         fetchText(CONFIG.coversUrl, { optional: true }), fetchText(CONFIG.feedUrl, { optional: true }),
       ]);
-      this.vocab = buildVocab(JSON.parse(vocabText));
-      const { books, issues } = buildCatalog(parseBooksFile(CONFIG.booksUrl, booksText), this.vocab);
-      if (issues.length) console.warn(`books: ${issues.length} مورد قابل بررسی`, issues);
-      this.books = books;
-      this.byId = new Map(books.map((b) => [b.id, b]));
-      this.covers = coversText ? JSON.parse(coversText) : {};
+      this.catalogs.books = this.#buildSection(CONFIG.booksUrl, booksText, vocabText, coversText, CONFIG.summariesDir);
       this.feed = feedText ? JSON.parse(feedText) : [];
     } catch (err) {
       console.error(err);
@@ -76,40 +111,131 @@ class App {
       return;
     }
 
-    this.rec = new Recommender(this.books, this.vocab);
-    this.lexicon = compileLexicon(this.vocab);
-    this.counts = this.#counts();
     this.#loadShelf();
-    this.ctx = this.#context();
+    const initialHash = new URLSearchParams(location.hash.slice(1));
+    const wantSection = initialHash.get('s') === 'novels' ? 'novels' : 'books';
+    const hashBook = initialHash.get('b');
+    let startSection = wantSection;
+    if (wantSection === 'novels' || (hashBook && !this.catalogs.books.byId.has(hashBook))) {
+      const loaded = await this.ensureNovels();
+      if (loaded && (wantSection === 'novels' || loaded.byId.has(hashBook))) startSection = 'novels';
+    }
+
+    this.#activateSection(startSection);
     this.#restoreFromHash();
     this.#bindEvents();
-    this.#renderExamples();
-    this.tonight = tonightPick(this.books);
-    mount($('#tonight'), V.tonightView(this.tonight, this.ctx, { label: nightLabel() }));
     mount($('#feed'), V.feedView(this.feed, this.ctx));
     $('#feed').hidden = !this.feed?.length;
     this.#updateShelfBadge();
     this.update({ reparse: true });
     document.body.classList.remove('is-loading');
 
-    const hash = new URLSearchParams(location.hash.slice(1));
-    const book = hash.get('b');
-    if (book && this.byId.has(book)) this.openBook(book);
-    else if (hash.has('tonight') && this.tonight) this.openBook(this.tonight.id);
+    if (hashBook && this.byId.has(hashBook)) this.openBook(hashBook);
+    else if (initialHash.has('tonight') && this.tonight) this.openBook(this.tonight.id);
+  }
+
+  #buildSection(url, dataText, vocabText, coversText, summariesDir) {
+    const vocab = buildVocab(JSON.parse(vocabText));
+    const { books, issues } = buildCatalog(parseBooksFile(url, dataText), vocab);
+    if (issues.length) console.warn(`${url}: ${issues.length} مورد قابل بررسی`, issues);
+    const byId = new Map(books.map((b) => [b.id, b]));
+    const covers = coversText ? JSON.parse(coversText) : {};
+    for (const b of books) this.allById.set(b.id, b);
+    Object.assign(this.allCovers, covers);
+    const rec = new Recommender(books, vocab);
+    const lexicon = compileLexicon(vocab);
+    const counts = this.#counts(books, vocab);
+    const tonight = tonightPick(books);
+    return { books, byId, vocab, rec, lexicon, counts, covers, tonight, shards: new Map(), summariesDir };
+  }
+
+  async ensureNovels() {
+    if (this.catalogs.novels) return this.catalogs.novels;
+    if (this.novelsPromise) return this.novelsPromise;
+    this.novelsPromise = (async () => {
+      try {
+        const [novelsText, vocabText, coversText] = await Promise.all([
+          fetchText(CONFIG.novelsUrl), fetchText(CONFIG.novelsVocabUrl),
+          fetchText(CONFIG.novelCoversUrl, { optional: true }),
+        ]);
+        this.catalogs.novels = this.#buildSection(CONFIG.novelsUrl, novelsText, vocabText, coversText, CONFIG.novelSummariesDir);
+        this.#updateShelfBadge();
+        return this.catalogs.novels;
+      } catch (err) {
+        console.error(err);
+        this.toast('فهرست ناول‌های شرقی باز نشد؛ اینترنتت رو چک کن.');
+        return null;
+      } finally {
+        this.novelsPromise = null;
+      }
+    })();
+    return this.novelsPromise;
+  }
+
+  #activateSection(sec) {
+    const cat = this.catalogs[sec];
+    if (!cat) return;
+    this.section = sec;
+    this.vocab = cat.vocab;
+    this.books = cat.books;
+    this.byId = cat.byId;
+    this.covers = cat.covers;
+    this.rec = cat.rec;
+    this.lexicon = cat.lexicon;
+    this.counts = cat.counts;
+    this.tonight = cat.tonight;
+    this.shards = cat.shards;
+    this.summariesDir = cat.summariesDir;
+    this.ctx = this.#context();
+
+    document.body.dataset.section = sec;
+    $$('[data-act="section"]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.section === sec)));
+    const copy = SECTIONS[sec];
+    $('#hero-title').textContent = copy.heroTitle;
+    $('#hero-lead').textContent = copy.heroLead;
+    $('#composer-input').placeholder = copy.placeholder;
+    $('#tab-like').textContent = copy.likeTab;
+    $('#like-input').placeholder = copy.likePlaceholder;
+    $('#like-hint').textContent = copy.likeHint;
+    $('#picker-hint').textContent = copy.pickerHint;
+    $('#surprise-title').textContent = copy.surpriseTitle;
+    this.#renderExamples();
+    mount($('#tonight'), V.tonightView(this.tonight, this.ctx, { label: nightLabel() }));
+  }
+
+  async switchSection(sec, { keepText = false } = {}) {
+    if (sec === this.section) return;
+    if (sec === 'novels' && !this.catalogs.novels) {
+      document.body.classList.add('is-loading');
+      const loaded = await this.ensureNovels();
+      document.body.classList.remove('is-loading');
+      if (!loaded) return;
+    }
+    const prevText = keepText ? this.state.text : '';
+    Object.assign(this.state, { text: prevText, dropped: new Set(), picks: new Map(), strategies: {}, likes: [], shuffle: 0, showAllThemes: false });
+    $('#composer-input').value = prevText;
+    $('#like-input').value = '';
+    $('#like-options').hidden = true;
+    this.#activateSection(sec);
+    this.#renderLikes();
+    this.update({ reparse: true });
   }
 
   /* ---------- derived data ---------- */
 
-  #counts() {
-    const c = { genres: new Map(), themes: new Map(), warnings: new Map(), formats: new Map() };
-    const inc = (m, k) => m.set(k, (m.get(k) ?? 0) + 1);
-    const parent = new Map(this.vocab.genres.list.filter((g) => g.parent).map((g) => [g.id, g.parent]));
-    for (const b of this.books) {
+  #counts(books, vocab) {
+    const c = { genres: new Map(), themes: new Map(), warnings: new Map(), formats: new Map(), origins: new Map(), statuses: new Map(), adaptations: new Map() };
+    const inc = (m, k) => { if (k) m.set(k, (m.get(k) ?? 0) + 1); };
+    const parent = new Map(vocab.genres.list.filter((g) => g.parent).map((g) => [g.id, g.parent]));
+    for (const b of books) {
       const gs = new Set(b.genres.flatMap((g) => (parent.has(g) ? [g, parent.get(g)] : [g])));
       gs.forEach((g) => inc(c.genres, g));
       b.themes.forEach((t) => inc(c.themes, t));
       b.warnings.forEach((w) => inc(c.warnings, w));
+      (b.adaptations ?? []).forEach((a) => inc(c.adaptations, a));
       inc(c.formats, b.format);
+      inc(c.origins, b.origin);
+      inc(c.statuses, b.status);
     }
     return c;
   }
@@ -117,11 +243,11 @@ class App {
   #context() {
     const self = this;
     return {
-      vocab: this.vocab, byId: this.byId, counts: this.counts, total: this.books.length, parentName: CONFIG.parentName,
+      section: this.section, vocab: this.vocab, byId: this.byId, allById: this.allById, counts: this.counts, total: this.books.length, parentName: CONFIG.parentName,
       get pph() { return self.pph; },
       shelfState: (id) => (this.shelf.want.includes(id) ? 'want' : this.shelf.read.includes(id) ? 'read' : this.shelf.nope.includes(id) ? 'nope' : null),
-      // Cards only need the cover; the full summary arrives when a book is opened.
-      summaryFor: (id) => this.summaries.get(id)?.data ?? (this.covers[id] ? { cover: this.covers[id] } : null),
+      // Cards only need the cover; the full summary arrives when an item is opened.
+      summaryFor: (id) => this.summaries.get(id)?.data ?? (this.allCovers[id] ? { cover: this.allCovers[id] } : null),
       summaryState: (id) => this.summaries.get(id),
     };
   }
@@ -133,7 +259,7 @@ class App {
       const k = signalKey(s);
       if (dropped.has(k) || picks.has(k)) return false;
       if (SINGLE_KINDS.has(s.kind) && (pickedKinds.has(s.kind) || dropped.has(`${s.kind}:*`))) return false;
-      if (s.kind === 'pages' && pickedKinds.has('length')) return false;
+      if ((s.kind === 'pages' || s.kind === 'chapters' || s.kind === 'volumes') && pickedKinds.has('length')) return false;
       return true;
     });
     const fromLikes = likes.map((id) => ({ kind: 'seed', id, polarity: 1, strength: 1, source: 'like' }));
@@ -143,7 +269,7 @@ class App {
   getState(kind, id) {
     const sigs = this.signals();
     if (id === undefined) {
-      const s = sigs.find((x) => x.kind === kind);
+      const s = sigs.find((x) => x.kind === kind && (x.polarity ?? 1) > 0);
       return s ? s.id : '';
     }
     const s = sigs.find((x) => x.kind === kind && x.id === id);
@@ -165,9 +291,10 @@ class App {
     this.result = this.rec.recommend(signals, { hidden: this.hidden, limit: 40, shuffle: this.state.shuffle });
 
     const typed = hasContent(this.state.text);
+    const suggestNovels = this.section === 'books' && typed && EASTERN_HINT_RE.test(normalize(this.state.text));
     mount($('#understood'), V.understandingView(this.ctx, {
       signals, states: this.state.parsed.states, strategies: this.state.strategies, typed,
-      understood: this.state.parsed.signals.length > 0,
+      understood: this.state.parsed.signals.length > 0, suggestNovels,
     }));
     this.renderPicker();
     this.renderResults();
@@ -200,10 +327,10 @@ class App {
   }
 
   segment(kind, id) {
-    for (const [k, p] of this.state.picks) if (p.kind === kind || (kind === 'length' && p.kind === 'pages')) this.state.picks.delete(k);
+    for (const [k, p] of this.state.picks) if (p.kind === kind || (kind === 'length' && (p.kind === 'pages' || p.kind === 'chapters' || p.kind === 'volumes'))) this.state.picks.delete(k);
     if (id) this.state.picks.set(`${kind}:${id}`, { kind, id, polarity: 1, strength: 1, source: 'pick' });
     else this.state.dropped.add(`${kind}:*`);
-    if (kind === 'length') this.state.dropped.add('pages:*');
+    if (kind === 'length') { this.state.dropped.add('pages:*'); this.state.dropped.add('chapters:*'); this.state.dropped.add('volumes:*'); }
     this.update();
   }
 
@@ -218,11 +345,17 @@ class App {
 
   relax(key) {
     const [kind, id] = key.split(':');
+    const clearKind = (k) => {
+      for (const [pk, p] of this.state.picks) if (p.kind === k) this.state.picks.delete(pk);
+      this.state.dropped.add(`${k}:*`);
+      for (const s of this.state.parsed.signals) if (s.kind === k) this.state.dropped.add(signalKey(s));
+    };
     if (kind === 'warning') this.drop(`warning:${id}`);
-    else if (kind === 'genre' || kind === 'theme' || kind === 'mood') this.drop(`${kind}:${id}`);
+    else if (id && ['genre', 'theme', 'mood', 'origin', 'status', 'adaptation'].includes(kind)) this.drop(`${kind}:${id}`);
+    else if (['origin', 'status', 'adaptation'].includes(kind)) { clearKind(kind); this.update(); }
     else if (kind === 'translated') this.segment('translated', '');
     else if (kind === 'audience') this.segment('audience', '');
-    else if (kind === 'pages') { this.state.dropped.add('pages:*'); for (const s of this.state.parsed.signals) if (s.kind === 'pages') this.state.dropped.add(signalKey(s)); this.segment('length', ''); }
+    else if (kind === 'pages' || kind === 'chapters' || kind === 'volumes') { clearKind(kind); this.segment('length', ''); }
     this.toast('یکی از محدودیت‌ها برداشته شد.');
   }
 
@@ -238,7 +371,7 @@ class App {
     for (const l of ['want', 'read', 'nope']) this.shelf[l] = this.shelf[l].filter((x) => x !== id);
     if (!inList) this.shelf[list].unshift(id);
     this.#saveShelf();
-    const title = this.byId.get(id)?.title ?? '';
+    const title = this.allById.get(id)?.title ?? '';
     if (!inList && list === 'nope') this.toast(`«${title}» دیگه پیشنهاد نمی‌شه.`, { action: 'برگردون', run: () => this.toggleShelf('nope', id) });
     else if (!inList && list === 'read') this.toast(`«${title}» رفت تو «خوندم».`, { action: 'برگردون', run: () => this.toggleShelf('read', id) });
     else if (!inList && list === 'want') this.toast(`«${title}» به فهرست «می‌خوام بخونم» اضافه شد.`);
@@ -272,11 +405,11 @@ class App {
     return done(data);
   }
 
-  /** Loads the summaries file that holds this book (each file holds ~1/64 of the catalog). */
+  /** Loads the summaries file that holds this book/novel (each file holds ~1/64 of its catalog). */
   #bakedSummary(id) {
     const n = shardOf(id);
     if (!this.shards.has(n)) {
-      this.shards.set(n, fetchText(`${CONFIG.summariesDir}${shardName(n)}`, { optional: true })
+      this.shards.set(n, fetchText(`${this.summariesDir}${shardName(n)}`, { optional: true })
         .then((t) => (t ? JSON.parse(t) : {}))
         .catch(() => ({})));
     }
@@ -294,18 +427,29 @@ class App {
   async storyCard(id, source) {
     const book = this.byId.get(id);
     if (!book) return;
+    const isNovel = Boolean(book.origin);
     const text = this.state.text.trim();
     const quote = source === 'pick' && text && text.length <= 90 ? text : '';
-    const kicker = source === 'tonight' ? `کتاب امشب · ${nightLabel()}` : quote ? 'امشب حالم این بود:' : 'کتاب امشب من';
+    const kicker = source === 'tonight'
+      ? `${isNovel ? 'ناول امشب' : 'کتاب امشب'} · ${nightLabel()}`
+      : quote ? 'امشب حالم این بود:' : (isNovel ? 'ناول امشب من' : 'کتاب امشب من');
     const link = new URL(location.href);
-    link.hash = `b=${id}`;
+    link.hash = isNovel ? `s=novels&b=${id}` : `b=${id}`;
+    const meta = isNovel
+      ? [
+        this.vocab.origins?.byId.get(book.origin)?.label,
+        book.status ? this.vocab.statuses?.byId.get(book.status)?.label : '',
+        book.chapters ? `${fa(book.chapters.toLocaleString('en-US'))} چپتر` : (book.volumes ? `${fa(book.volumes)} جلد` : ''),
+        book.year ? fa(book.year) : '',
+      ].filter(Boolean).join(' · ')
+      : [book.pages ? `${fa(book.pages)} صفحه` : '', book.pages ? readingTime(book.pages, this.pph) : '', book.year ? fa(book.year) : ''].filter(Boolean).join(' · ');
     const card = {
       id, kicker, quote,
       title: book.title.replace(/\s*\(.*\)\s*/, ''),
       author: book.author,
-      translators: listFa(book.translators.slice(0, 2)),
+      translators: isNovel ? '' : listFa(book.translators.slice(0, 2)),
       chips: book.moods.slice(0, 3).map((m) => this.vocab.moods.byId.get(m)?.label ?? m),
-      meta: [book.pages ? `${fa(book.pages)} صفحه` : '', book.pages ? readingTime(book.pages, this.pph) : '', book.year ? fa(book.year) : ''].filter(Boolean).join(' · '),
+      meta,
       coverSources: coverSources(book, this.ctx.summaryFor(id)),
       palette: palette(book),
       backdrop: 'assets/img/hero-night-mobile.webp',
@@ -318,8 +462,17 @@ class App {
 
   /* ---------- dialogs ---------- */
 
-  openBook(id) {
+  async openBook(id) {
+    if (!this.byId.has(id)) {
+      if (this.section === 'books') {
+        const loaded = await this.ensureNovels();
+        if (loaded?.byId.has(id)) await this.switchSection('novels');
+      } else if (this.catalogs.books?.byId.has(id)) {
+        await this.switchSection('books');
+      }
+    }
     if (!this.byId.has(id)) return;
+    if ($('#shelf').open) $('#shelf').close();
     this.openId = id;
     this.expanded = false;
     this.renderSheet();
@@ -340,8 +493,12 @@ class App {
     }));
   }
 
-  openShelf(tab = this.shelfTab ?? 'want') {
+  async openShelf(tab = this.shelfTab ?? 'want') {
     this.shelfTab = tab;
+    const allSaved = [...this.shelf.want, ...this.shelf.read, ...this.shelf.nope];
+    if (!this.catalogs.novels && allSaved.some((id) => !this.allById.has(id))) {
+      await this.ensureNovels();
+    }
     this.renderShelf();
     if (!$('#shelf').open) $('#shelf').showModal();
   }
@@ -421,7 +578,9 @@ class App {
   }
 
   #updateShelfBadge() {
-    const n = this.shelf.want.filter((id) => this.byId.has(id)).length;
+    const n = this.catalogs.novels
+      ? this.shelf.want.filter((id) => this.allById.has(id)).length
+      : this.shelf.want.length;
     const badge = $('#shelf-count');
     badge.textContent = n ? fa(n) : '';
     badge.hidden = !n;
@@ -429,6 +588,7 @@ class App {
 
   #writeHash() {
     const p = new URLSearchParams();
+    if (this.section === 'novels') p.set('s', 'novels');
     if (this.state.text.trim()) p.set('q', this.state.text.trim());
     const picks = [...this.state.picks.values()].map((s) => `${s.polarity < 0 ? '-' : ''}${s.kind}.${s.id}`);
     if (picks.length) p.set('p', picks.join(','));
@@ -480,7 +640,8 @@ class App {
   }
 
   #renderExamples() {
-    const pick = [...EXAMPLES].sort(() => Math.random() - 0.5).slice(0, 4);
+    const list = SECTIONS[this.section].examples;
+    const pick = [...list].sort(() => Math.random() - 0.5).slice(0, 4);
     mount($('#examples'), html`<span class="examples__lead">مثلاً</span>${pick.map((t) => html`<button type="button" class="example" data-act="example">${t}</button>`)}`);
   }
 
@@ -553,6 +714,8 @@ class App {
   #act(e, el) {
     const { act, id, kind } = el.dataset;
     switch (act) {
+      case 'section': return this.switchSection(el.dataset.section);
+      case 'jump-novels': return this.switchSection('novels', { keepText: true });
       case 'cycle': return this.cycle(kind, id);
       case 'segment': return this.segment(kind, id);
       case 'warning': {
@@ -601,8 +764,8 @@ class App {
       }
       case 'copy-book': {
         const url = new URL(location.href);
-        url.hash = `b=${id}`;
-        return this.copy(url.toString(), 'لینک کتاب کپی شد.');
+        url.hash = this.section === 'novels' ? `s=novels&b=${id}` : `b=${id}`;
+        return this.copy(url.toString(), this.section === 'novels' ? 'لینک ناول کپی شد.' : 'لینک کتاب کپی شد.');
       }
       case 'expand-summary': this.expanded = !this.expanded; return mount($('.sheet__summary'), V.sheetSummary(this.summaries.get(this.openId), this.expanded));
       case 'story': return this.storyCard(id, kind);

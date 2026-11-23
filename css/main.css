@@ -94,6 +94,27 @@ a:hover { color: var(--moon); }
 .brand__name { font-size: 1.75rem; line-height: 1; color: var(--moon); }
 .brand__by { font-size: 0.85rem; color: var(--parchment-2); }
 .brand__by span { color: var(--parchment); font-weight: 600; }
+.sections {
+  display: inline-flex; align-items: center; gap: 4px; padding: 4px;
+  background: var(--ink-950); border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.sections__tab {
+  background: none; border: 1px solid transparent; border-radius: var(--r-sm);
+  padding: 6px 14px; min-height: 38px; color: var(--parchment-2); font-weight: 500; font-size: 0.94rem;
+  white-space: nowrap; transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+.sections__tab:hover { color: var(--parchment); }
+.sections__tab[aria-selected='true'] {
+  background: var(--ink-700); border-color: var(--line-strong); color: var(--moon); font-weight: 600;
+}
+body[data-section='novels'] .sections__tab[aria-selected='true'] {
+  background: rgb(124 196 176 / 0.14); border-color: rgb(124 196 176 / 0.42); color: var(--jade);
+}
+body[data-section='novels'] .tonight__card {
+  background: linear-gradient(135deg, rgb(124 196 176 / 0.12), rgb(17 26 48 / 0.92) 55%);
+  border-color: rgb(124 196 176 / 0.35);
+}
+body[data-section='novels'] .tonight__kicker { color: var(--jade); }
 .topbar__shelf .count {
   min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px;
   background: var(--saffron); color: var(--saffron-ink); font-size: 0.8rem; font-weight: 700;
@@ -203,6 +224,14 @@ main { width: min(100% - 2 * var(--gutter), var(--maxw)); margin-inline: auto; }
 }
 .understood__lead { color: var(--parchment-2); font-size: 0.92rem; margin-inline-end: 4px; }
 .understood__miss { padding: 14px 16px; background: rgb(17 26 48 / 0.9); border: 1px solid var(--line); border-radius: var(--r-md); color: var(--parchment-2); margin: 0; }
+.cross-hint {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 16px; margin-bottom: 10px; border-radius: var(--r-md);
+  background: rgb(124 196 176 / 0.1); border: 1px solid rgb(124 196 176 / 0.35); color: var(--parchment);
+}
+.cross-hint strong { color: var(--jade); }
+.cross-hint .btn { min-height: 38px; padding: 6px 12px; border-color: rgb(124 196 176 / 0.45); color: var(--jade); }
+.cross-hint .btn:hover { background: rgb(124 196 176 / 0.14); border-color: var(--jade); }
 .tag {
   display: inline-flex; align-items: center; gap: 6px; min-height: 34px;
   padding: 4px 6px 4px 12px; padding-inline: 12px 6px;
@@ -279,6 +308,18 @@ main { width: min(100% - 2 * var(--gutter), var(--maxw)); margin-inline: auto; }
 .fit--strong { color: var(--jade); }
 .fit--good { color: var(--saffron-hi); }
 .fit--loose { color: var(--parchment-3); }
+.card__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
+.card__top:empty { display: none; }
+.card__top .fit { margin-bottom: 0; }
+.meta-badges { display: inline-flex; flex-wrap: wrap; gap: 5px; }
+.badge {
+  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px;
+  font-size: 0.76rem; line-height: 1.5; font-weight: 500;
+  background: rgb(241 231 210 / 0.06); border: 1px solid var(--line); color: var(--parchment-2);
+}
+.badge--cn { background: rgb(234 168 70 / 0.12); border-color: rgb(234 168 70 / 0.35); color: var(--saffron-hi); }
+.badge--kr { background: rgb(124 196 176 / 0.12); border-color: rgb(124 196 176 / 0.35); color: var(--jade); }
+.badge--jp { background: rgb(226 115 95 / 0.12); border-color: rgb(226 115 95 / 0.35); color: #f09c8c; }
 
 .top {
   display: grid; grid-template-columns: minmax(180px, 260px) 1fr; gap: clamp(20px, 4vw, 48px);
@@ -454,6 +495,9 @@ body.is-loading .results { opacity: 0.6; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 760px) {
+  .topbar { flex-wrap: wrap; row-gap: 10px; }
+  .sections { order: 3; width: 100%; justify-content: stretch; }
+  .sections__tab { flex: 1; text-align: center; min-height: 44px; }
   .brand__by { display: none; }
   .topbar__shelf span:not(.count) { display: none; }
   .hero { padding-top: 32px; }

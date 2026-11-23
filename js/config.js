@@ -12,6 +12,11 @@ export const CONFIG = {
   /** Built by tools/prefetch.mjs. Missing files are fine. */
   coversUrl: './data/covers.json',
   summariesDir: './data/summaries/',
+  /** Eastern novels section (lazy-loaded on demand). */
+  novelsUrl: './data/novels.json',
+  novelsVocabUrl: './data/novels-vocab.json',
+  novelCoversUrl: './data/novel-covers.json',
+  novelSummariesDir: './data/novel-summaries/',
   feedUrl: './data/feed.json',
 
   /** Live summary lookup in the visitor's browser when a book has no prebuilt summary. */

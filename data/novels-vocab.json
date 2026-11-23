@@ -1,0 +1,432 @@
+{
+  "$comment": "واژه‌نامه‌ی کنترل‌شده‌ی بخش ناول‌های شرقی (چینی، کره‌ای و ژاپنی).",
+  "origins": [
+    {
+      "id": "cn",
+      "label": "چینی",
+      "aliases": ["چینی", "=چین", "ناول چینی", "وب ناول چینی", "chinese", "=cn"]
+    },
+    {
+      "id": "kr",
+      "label": "کره‌ای",
+      "aliases": ["کره ای", "=کره", "ناول کره ای", "وب ناول کره ای", "korean", "=kr"]
+    },
+    {
+      "id": "jp",
+      "label": "ژاپنی",
+      "aliases": ["ژاپنی", "=ژاپن", "ناول ژاپنی", "لایت ناول ژاپنی", "japanese", "=jp"]
+    }
+  ],
+  "statuses": [
+    {
+      "id": "completed",
+      "label": "پایان‌یافته",
+      "aliases": ["پایان یافته", "تموم شده", "تمام شده", "تکمیل شده", "پایان دار", "=کامل", "completed", "finished"]
+    },
+    {
+      "id": "ongoing",
+      "label": "در حال انتشار",
+      "aliases": ["در حال انتشار", "ادامه دار", "ناتموم", "ناتمام", "ongoing"]
+    },
+    {
+      "id": "hiatus",
+      "label": "متوقف",
+      "aliases": ["متوقف", "هیئتوس", "hiatus"]
+    }
+  ],
+  "adaptations": [
+    {
+      "id": "anime",
+      "label": "انیمه",
+      "aliases": ["انیمه", "انیمه داره", "با انیمه", "anime"]
+    },
+    {
+      "id": "manhwa",
+      "label": "مانهوا",
+      "aliases": ["مانهوا", "وبتون", "وب تون", "مانهوا داره", "manhwa", "webtoon"]
+    },
+    {
+      "id": "donghua",
+      "label": "دونگهوا",
+      "aliases": ["دونگهوا", "انیمیشن چینی", "دونگهوا داره", "donghua"]
+    },
+    {
+      "id": "manga",
+      "label": "مانگا",
+      "aliases": ["مانگا", "مانگا داره", "manga"]
+    },
+    {
+      "id": "drama",
+      "label": "سریال",
+      "aliases": ["سریال داره", "لایو اکشن", "دراما", "کدراما", "سی دراما", "live action", "drama"]
+    }
+  ],
+  "moods": [
+    {
+      "id": "dark",
+      "label": "تاریک",
+      "near": ["eerie", "melancholic"],
+      "aliases": ["تاریک", "دارک", "=سیاه", "تیره", "تلخ", "بی رحم", "بیرحم", "dark", "grim"]
+    },
+    {
+      "id": "hopeful",
+      "label": "امیدبخش",
+      "near": ["cozy", "wonder"],
+      "aliases": ["امید", "امیدوار", "امیدبخش", "انگیزه", "مثبت", "دلگرم", "روشن", "hopeful", "uplifting"]
+    },
+    {
+      "id": "cozy",
+      "label": "دنج و گرم",
+      "near": ["hopeful", "funny"],
+      "aliases": ["دنج", "=گرم", "دلنشین", "آرامش", "آرامبخش", "آروم کننده", "بی دغدغه", "ملایم", "لطیف", "cozy", "comfort"]
+    },
+    {
+      "id": "tense",
+      "label": "پرتعلیق",
+      "near": ["adventurous", "dark"],
+      "aliases": ["تعلیق", "پرتعلیق", "هیجان", "هیجانی", "پرهیجان", "نفس گیر", "دلهره", "استرسی", "تنش", "thriller", "tense", "suspense"]
+    },
+    {
+      "id": "melancholic",
+      "label": "غمگین و نوستالژیک",
+      "near": ["philosophical", "dark"],
+      "aliases": ["غمگین", "=غم", "غمناک", "اندوه", "سوزناک", "حزن", "نوستالژیک", "نوستالژی", "مالیخولیا", "دلگیر", "اشک", "گریه", "melancholic", "sad"]
+    },
+    {
+      "id": "philosophical",
+      "label": "فلسفی و ژرف",
+      "near": ["melancholic", "mysterious"],
+      "aliases": ["فلسفی", "فلسفه", "عمیق", "ژرف", "تامل", "تاملی", "فکری", "اگزیستانسیال", "وجودی", "معنا", "philosophical", "deep"]
+    },
+    {
+      "id": "epic",
+      "label": "حماسی",
+      "near": ["adventurous", "wonder"],
+      "aliases": ["حماسی", "حماسه", "باشکوه", "عظیم", "جهان سازی", "جهانسازی", "epic"]
+    },
+    {
+      "id": "adventurous",
+      "label": "پرماجرا",
+      "near": ["epic", "tense"],
+      "aliases": ["ماجرا", "ماجراجویی", "ماجراجویانه", "پرماجرا", "سفر", "اکشن", "adventure", "action"]
+    },
+    {
+      "id": "eerie",
+      "label": "وهم‌آلود",
+      "near": ["mysterious", "dark"],
+      "aliases": ["=وهم", "وهم آلود", "عجیب", "غریب", "ترسناک", "=ترس", "وحشت", "مور مور", "خوف", "رعب", "مرموز", "eerie", "creepy", "scary"]
+    },
+    {
+      "id": "funny",
+      "label": "بامزه",
+      "near": ["cozy", "adventurous"],
+      "aliases": ["طنز", "بامزه", "خنده", "خنده دار", "کمدی", "شوخ", "شوخی", "بخندم", "خندوندن", "funny", "humor", "comedy"]
+    },
+    {
+      "id": "wonder",
+      "label": "شگفت‌انگیز",
+      "near": ["epic", "hopeful"],
+      "aliases": ["شگفت", "شگفت انگیز", "حیرت", "خیال انگیز", "جادویی", "رویایی", "سحرآمیز", "wonder", "magical"]
+    },
+    {
+      "id": "romantic",
+      "label": "عاشقانه",
+      "near": ["melancholic", "cozy"],
+      "aliases": ["عاشقانه", "عشق", "رمانتیک", "=عاشق", "romance", "romantic"]
+    },
+    {
+      "id": "mysterious",
+      "label": "رازآلود",
+      "near": ["eerie", "philosophical"],
+      "aliases": ["=راز", "رازآلود", "رازآلوده", "معما", "معمایی", "پازل", "گره", "کشف", "mystery", "mysterious"]
+    }
+  ],
+  "genres": [
+    {
+      "id": "xianxia",
+      "label": "شیان‌شیا",
+      "aliases": ["شیان شیا", "شیانشیا", "کالتیویشن", "تزکیه", "تزکیه گر", "جاودانگی", "xianxia", "cultivation"]
+    },
+    {
+      "id": "xuanhuan",
+      "label": "شوان‌هوان",
+      "aliases": ["شوان هوان", "شوانهوان", "فانتزی چینی", "فانتزی شرقی", "xuanhuan"]
+    },
+    {
+      "id": "wuxia",
+      "label": "ووشیا و موریم",
+      "aliases": ["ووشیا", "موریم", "هنرهای رزمی", "رزمی", "شمشیرزن", "شمشیرزنی", "wuxia", "murim"]
+    },
+    {
+      "id": "isekai",
+      "label": "ایسکای و تناسخ",
+      "aliases": ["ایسکای", "تناسخ", "دنیای دیگر", "دنیای دیگه", "انتقال به دنیای دیگه", "تولد دوباره", "isekai", "transmigration", "reincarnation"]
+    },
+    {
+      "id": "system-litrpg",
+      "label": "سیستم و لیت‌آرپی‌جی",
+      "aliases": ["سیستم", "لیت آر پی جی", "لیترپیجی", "گیمینگ", "سطح بندی", "لول آپ", "لول اپ", "بازی گونه", "system", "litrpg", "gamelit"]
+    },
+    {
+      "id": "hunter-dungeon",
+      "label": "شکارچی، برج و دانجن",
+      "aliases": ["شکارچی", "هانتر", "دانجن", "سیاهچال", "=برج", "گیت", "دروازه", "hunter", "dungeon", "tower"]
+    },
+    {
+      "id": "regression",
+      "label": "بازگشت در زمان",
+      "aliases": ["رگرسیون", "رگرسور", "بازگشت در زمان", "برگشت به گذشته", "تایم لوپ", "چرخه زمان", "regression", "regressor", "time loop"]
+    },
+    {
+      "id": "dark-eastern",
+      "label": "فانتزی تاریک و وحشت",
+      "aliases": ["فانتزی تاریک", "دارک فانتزی", "گریمدارک", "وحشت", "هارور", "dark fantasy", "horror", "grimdark"]
+    },
+    {
+      "id": "unlimited-flow",
+      "label": "جریان نامحدود",
+      "aliases": ["جریان نامحدود", "بازی بقا", "بازی مرگ", "انلیمیتد فلو", "unlimited flow", "infinite flow"]
+    },
+    {
+      "id": "court-otome",
+      "label": "درباری و اوتومه",
+      "aliases": ["اوتومه", "درباری", "تاریخی", "ویلنس", "شرور زن", "ملکه", "روفن", "otome", "villainess", "rofan", "historical"]
+    },
+    {
+      "id": "danmei",
+      "label": "دنمی و عاشقانه",
+      "aliases": ["دنمی", "بی ال", "عاشقانه شرقی", "danmei", "=bl"]
+    },
+    {
+      "id": "eastern-sf",
+      "label": "علمی‌تخیلی و آخرالزمانی",
+      "aliases": ["علمی تخیلی", "علمی-تخیلی", "سایبرپانک", "آخرالزمانی", "پساآخرالزمانی", "مکا", "فضایی", "sci fi", "scifi", "apocalypse", "mecha"]
+    },
+    {
+      "id": "mystery-psych",
+      "label": "معمایی و روانشناختی",
+      "aliases": ["روانشناختی", "روانشناسی", "کارآگاهی", "ذهنی", "استنتاجی", "psychological", "detective"]
+    },
+    {
+      "id": "slice-of-life",
+      "label": "برش زندگی",
+      "aliases": ["برش زندگی", "روزمره", "اسلایس آف لایف", "آشپزی", "کشاورزی", "slice of life"]
+    }
+  ],
+  "themes": [
+    {
+      "id": "cultivation",
+      "label": "تزکیه و جاودانگی",
+      "aliases": ["تزکیه", "جاودانه", "کالتیویشن", "دائو", "انرژی معنوی", "cultivation", "dao"]
+    },
+    {
+      "id": "smart-mc",
+      "label": "قهرمان باهوش و زیرک",
+      "aliases": ["باهوش", "زیرک", "مکار", "استراتژیست", "حسابگر", "خونسرد", "شخصیت اصلی باهوش", "smart mc", "cunning"]
+    },
+    {
+      "id": "villain-mc",
+      "label": "ضدقهرمان و شرور",
+      "aliases": ["ضدقهرمان", "ضد قهرمان", "شرور", "بی رحم", "خاکستری", "شرورانه", "villain", "antihero", "evil mc"]
+    },
+    {
+      "id": "op-mc",
+      "label": "قهرمان بسیار قدرتمند",
+      "aliases": ["او پی", "قدرتمند", "قوی", "شکست ناپذیر", "مخفیانه قوی", "=op", "overpowered"]
+    },
+    {
+      "id": "weak-to-strong",
+      "label": "رشد از صفر تا اوج",
+      "aliases": ["از صفر", "ضعیف به قوی", "پیشرفت", "رشد تدریجی", "پروگرشن", "progression", "weak to strong"]
+    },
+    {
+      "id": "martial-arts",
+      "label": "هنرهای رزمی و فرقه‌ها",
+      "aliases": ["فرقه", "هنرهای رزمی", "استاد رزمی", "شمشیر", "مبارزه", "martial arts", "sect"]
+    },
+    {
+      "id": "kingdom-building",
+      "label": "ساخت قلمرو و مدیریت",
+      "aliases": ["ساخت قلمرو", "امپراتوری", "مدیریت", "حکمرانی", "تمدن سازی", "kingdom building"]
+    },
+    {
+      "id": "revenge",
+      "label": "انتقام",
+      "aliases": ["انتقام", "انتقامی", "کینه", "revenge"]
+    },
+    {
+      "id": "alchemy-crafting",
+      "label": "کیمیاگری و ساخت‌وساز",
+      "aliases": ["کیمیاگری", "آهنگری", "ساخت سلاح", "اکسیر", "معجون", "alchemy", "crafting"]
+    },
+    {
+      "id": "academy",
+      "label": "مدرسه و آکادمی",
+      "aliases": ["مدرسه", "آکادمی", "دانشگاه", "دبیرستان", "academy", "school"]
+    },
+    {
+      "id": "magic-system",
+      "label": "سیستم جادو و قدرت",
+      "aliases": ["سیستم جادو", "جادو", "جادوگر", "قدرت ماورایی", "magic", "magic system"]
+    },
+    {
+      "id": "gods-demons",
+      "label": "خدایان، شیاطین و اسطوره",
+      "aliases": ["خدایان", "شیطان", "شیاطین", "اسطوره", "افسانه", "پادشاه شیاطین", "gods", "demons", "myth"]
+    },
+    {
+      "id": "politics",
+      "label": "سیاست و توطئه",
+      "aliases": ["سیاست", "توطئه", "دسیسه", "اشرافی", "politics", "scheming"]
+    },
+    {
+      "id": "war",
+      "label": "جنگ و استراتژی",
+      "aliases": ["جنگ", "نبرد", "ارتش", "فرمانده", "war", "strategy"]
+    },
+    {
+      "id": "survival",
+      "label": "بقا و آخرالزمان",
+      "aliases": ["بقا", "زنده ماندن", "زنده موندن", "آخرالزمان", "survival"]
+    },
+    {
+      "id": "friendship",
+      "label": "دوستی و همراهان",
+      "aliases": ["دوستی", "رفاقت", "همراهان", "گروه", "خانواده", "friendship"]
+    },
+    {
+      "id": "romance-subplot",
+      "label": "خط عاشقانه",
+      "aliases": ["عاشقانه", "رمانس", "حرمسرا", "هارم", "harem", "romance"]
+    },
+    {
+      "id": "virtual-worlds",
+      "label": "دنیای مجازی و VR",
+      "aliases": ["دنیای مجازی", "واقعیت مجازی", "بازی آنلاین", "ای اسپورت", "mmorpg", "=vr", "esports"]
+    },
+    {
+      "id": "supernatural",
+      "label": "ارواح و ماوراءالطبیعه",
+      "aliases": ["ارواح", "روح", "جن", "ماوراءالطبیعه", "تسخیر", "supernatural", "ghosts"]
+    },
+    {
+      "id": "comedy-parody",
+      "label": "طنز و پارودی",
+      "aliases": ["پارودی", "هجو", "سوءتفاهم", "خنده دار", "parody", "satire"]
+    },
+    {
+      "id": "coming-of-age",
+      "label": "بلوغ و رشد شخصیت",
+      "aliases": ["بلوغ", "بزرگ شدن", "نوجوانی", "coming of age"]
+    },
+    {
+      "id": "identity",
+      "label": "هویت و راز گذشته",
+      "aliases": ["هویت", "هویت مخفی", "راز گذشته", "فراموشی", "identity"]
+    },
+    {
+      "id": "dragons-monsters",
+      "label": "اژدها و هیولاها",
+      "aliases": ["اژدها", "هیولا", "موجودات افسانه‌ای", "اسلایم", "عنکبوت", "dragons", "monsters"]
+    },
+    {
+      "id": "necromancy",
+      "label": "نکرومنسی و احضار",
+      "aliases": ["نکرومنسر", "نکرومنسی", "احضار", "سایه", "ارتش مردگان", "necromancer", "summoning"]
+    }
+  ],
+  "warnings": [
+    {
+      "id": "violence",
+      "label": "خشونت",
+      "aliases": ["خشونت", "خشن", "خونریزی", "violence"]
+    },
+    {
+      "id": "gore",
+      "label": "صحنه‌های خون‌آلود",
+      "aliases": ["خون آلود", "چندش", "gore"]
+    },
+    {
+      "id": "torture",
+      "label": "شکنجه",
+      "aliases": ["شکنجه", "torture"]
+    },
+    {
+      "id": "sexual",
+      "label": "محتوای جنسی / حرمسرا",
+      "aliases": ["صحنه جنسی", "جنسی", "سکس", "اچی", "حرمسرا", "هارم", "harem", "ecchi", "sex"]
+    },
+    {
+      "id": "suicide",
+      "label": "خودکشی",
+      "aliases": ["خودکشی", "suicide"]
+    },
+    {
+      "id": "child-harm",
+      "label": "آسیب یا مرگ کودک",
+      "aliases": ["مرگ کودک", "آسیب کودک"]
+    },
+    {
+      "id": "drugs",
+      "label": "مواد مخدر",
+      "aliases": ["مواد مخدر", "اعتیاد", "drugs"]
+    },
+    {
+      "id": "body-horror",
+      "label": "وحشت بدن",
+      "aliases": ["وحشت بدن", "جهش", "body horror"]
+    },
+    {
+      "id": "grief",
+      "label": "سوگ و از دست دادن",
+      "aliases": ["سوگ", "مرگ عزیز", "از دست دادن", "تراژدی", "grief"]
+    },
+    {
+      "id": "mental-illness",
+      "label": "افسردگی و بیماری روان",
+      "aliases": ["افسردگی", "بیماری روانی", "جنون", "mental illness"]
+    },
+    {
+      "id": "slavery",
+      "label": "برده‌داری",
+      "aliases": ["برده داری", "برده", "slavery"]
+    },
+    {
+      "id": "abuse",
+      "label": "آزار روانی",
+      "aliases": ["آزار", "سوءاستفاده", "قلدری", "abuse"]
+    },
+    {
+      "id": "spiders",
+      "label": "عنکبوت",
+      "aliases": ["عنکبوت", "spider", "spiders"]
+    },
+    {
+      "id": "profanity",
+      "label": "زبان رکیک",
+      "aliases": ["فحش", "رکیک", "بی ادبی"]
+    }
+  ],
+  "formats": [
+    {
+      "id": "webnovel",
+      "label": "وب‌ناول",
+      "aliases": ["وب ناول", "وبناول", "webnovel", "web novel"]
+    },
+    {
+      "id": "light-novel",
+      "label": "لایت ناول",
+      "aliases": ["لایت ناول", "لایتناول", "light novel", "=ln"]
+    },
+    {
+      "id": "novel",
+      "label": "رمان چاپی",
+      "aliases": ["رمان چاپی", "چاپی"]
+    }
+  ],
+  "audiences": [
+    { "id": "adult", "label": "بزرگسال" },
+    { "id": "ya", "label": "نوجوان" },
+    { "id": "all", "label": "همه‌ی سنین" }
+  ]
+}

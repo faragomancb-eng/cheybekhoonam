@@ -31,28 +31,35 @@ function triChip(kind, entry, state, count) {
 
 export function pickerView(ctx, getState, { showAllThemes }) {
   const counts = ctx.counts;
+  const isNovels = ctx.section === 'novels';
   const themes = showAllThemes ? ctx.vocab.themes.list : ctx.vocab.themes.list.filter((t) => counts.themes.get(t.id)).slice(0, 14);
   const usedThemes = ctx.vocab.themes.list.filter((t) => counts.themes.get(t.id));
   const group = (title, hint, body, cls = '') => html`<fieldset class="pick-group ${cls}"><legend>${title}</legend>${hint ? html`<p class="pick-hint">${hint}</p>` : ''}<div class="chips">${body}</div></fieldset>`;
+  const statusSeg = isNovels && ctx.vocab.statuses?.list.length
+    ? { kind: 'status', title: 'وضعیت انتشار', options: [['', 'فرقی نداره'], ...ctx.vocab.statuses.list.filter((s) => counts.statuses?.get(s.id)).map((s) => [s.id, s.label])] }
+    : null;
+  const segs = statusSeg ? [statusSeg, ...SEGMENTS] : SEGMENTS;
   return html`
-    ${group('حس‌وحال کتاب', 'یک بار بزنی یعنی «می‌خوام»، دوباره بزنی یعنی «نمی‌خوام».', ctx.vocab.moods.list.map((m) => triChip('mood', m, getState('mood', m.id))))}
-    ${group('ژانر', '', ctx.vocab.genres.list.filter((g) => counts.genres.get(g.id)).map((g) => triChip('genre', g, getState('genre', g.id), counts.genres.get(g.id))))}
+    ${isNovels && ctx.vocab.origins?.list.length ? group('خاستگاه', 'یک بار بزنی یعنی «می‌خوام»، دوباره بزنی یعنی «نمی‌خوام».', ctx.vocab.origins.list.filter((o) => counts.origins?.get(o.id)).map((o) => triChip('origin', o, getState('origin', o.id), counts.origins.get(o.id)))) : ''}
+    ${group(isNovels ? 'حس‌وحال ناول' : 'حس‌وحال کتاب', isNovels ? '' : 'یک بار بزنی یعنی «می‌خوام»، دوباره بزنی یعنی «نمی‌خوام».', ctx.vocab.moods.list.map((m) => triChip('mood', m, getState('mood', m.id))))}
+    ${group(isNovels ? 'ژانر شرقی' : 'ژانر', '', ctx.vocab.genres.list.filter((g) => counts.genres.get(g.id)).map((g) => triChip('genre', g, getState('genre', g.id), counts.genres.get(g.id))))}
     ${group('مایه‌ها', '', [
       ...themes.map((t) => triChip('theme', t, getState('theme', t.id), counts.themes.get(t.id))),
       usedThemes.length > 14 ? html`<button type="button" class="chip chip--more" data-act="more-themes">${showAllThemes ? 'کمتر' : `همه (${fa(usedThemes.length)})`}</button>` : '',
     ])}
     <div class="segments">
-      ${SEGMENTS.map((seg) => {
+      ${segs.map((seg) => {
         const current = getState(seg.kind) ?? '';
         return html`<fieldset class="segment"><legend>${seg.title}</legend><div class="segment__opts" role="radiogroup">
           ${seg.options.map(([id, label]) => html`<button type="button" role="radio" class="segment__opt" data-act="segment" data-kind="${seg.kind}" data-id="${id}" aria-checked="${current === id}">${label}</button>`)}
         </div></fieldset>`;
       })}
-      <fieldset class="segment"><legend>زبان</legend>
+      ${!isNovels ? html`<fieldset class="segment"><legend>زبان</legend>
         <label class="switch"><input type="checkbox" data-act="translated" ${getState('translated') === 'yes' ? 'checked' : ''}><span>فقط کتاب‌هایی که به فارسی ترجمه شده‌اند</span></label>
-      </fieldset>
+      </fieldset>` : ''}
     </div>
-    ${group('شکل کتاب', '', ctx.vocab.formats.list.filter((f) => f.id !== 'novel' && counts.formats.get(f.id)).map((f) => triChip('format', f, getState('format', f.id), counts.formats.get(f.id))))}
+    ${isNovels && ctx.vocab.adaptations?.list.length ? group('اقتباس دارد', '', ctx.vocab.adaptations.list.filter((a) => counts.adaptations?.get(a.id)).map((a) => triChip('adaptation', a, getState('adaptation', a.id), counts.adaptations.get(a.id)))) : ''}
+    ${group(isNovels ? 'قالب ناول' : 'شکل کتاب', '', ctx.vocab.formats.list.filter((f) => (isNovels ? true : f.id !== 'novel') && counts.formats.get(f.id)).map((f) => triChip('format', f, getState('format', f.id), counts.formats.get(f.id))))}
     ${group('نمی‌خوام داشته باشه', 'این‌ها کاملاً از نتیجه‌ها حذف می‌شن.', ctx.vocab.warnings.list.filter((w) => counts.warnings.get(w.id)).map((w) => {
       const on = getState('warning', w.id) === 'avoid';
       return html`<button type="button" class="chip chip--warn" data-act="warning" data-id="${w.id}" data-state="${on ? 'avoid' : 'off'}" aria-pressed="${on}">${on ? icon('nope', { size: 16 }) : ''}<span class="chip__text">${w.label}</span></button>`;
@@ -62,15 +69,23 @@ export function pickerView(ctx, getState, { showAllThemes }) {
 
 /* ---------- Understanding bar ---------- */
 
-export function understandingView(ctx, { signals, states, strategies, typed, understood }) {
+export function understandingView(ctx, { signals, states, strategies, typed, understood, suggestNovels = false }) {
   const visible = signals.filter((s) => s.source !== 'state');
+  const crossBanner = suggestNovels ? html`<div class="cross-hint">
+    <span>به نظر می‌رسد دنبال <strong>ناول شرقی</strong> هستی!</span>
+    <button type="button" class="btn btn--ghost" data-act="jump-novels">جست‌وجو در بخش ناول‌های شرقی ${icon('arrow', { size: 16 })}</button>
+  </div>` : '';
   if (!visible.length && !states.length) {
     if (typed && !understood) {
-      return html`<p class="understood__miss">این یکی رو کامل نفهمیدم. با کلمه‌هایی مثل «تاریک»، «بامزه»، «کوتاه»، «شبیه تل‌ماسه» یا اسم یک نویسنده امتحان کن، یا از گزینه‌های پایین انتخاب کن.</p>`;
+      const hint = ctx.section === 'novels'
+        ? 'این یکی رو کامل نفهمیدم. با کلمه‌هایی مثل «شیان‌شیا»، «موریم»، «کره‌ای»، «ایسکای»، «تموم‌شده»، «شبیه ارباب اسرار» یا اسم یک نویسنده امتحان کن، یا از گزینه‌های پایین انتخاب کن.'
+        : 'این یکی رو کامل نفهمیدم. با کلمه‌هایی مثل «تاریک»، «بامزه»، «کوتاه»، «شبیه تل‌ماسه» یا اسم یک نویسنده امتحان کن، یا از گزینه‌های پایین انتخاب کن.';
+      return html`${crossBanner}<p class="understood__miss">${hint}</p>`;
     }
-    return '';
+    return crossBanner;
   }
   return html`
+    ${crossBanner}
     <div class="understood__row">
       <span class="understood__lead">برداشت من از خواسته‌ت:</span>
       ${states.map((st) => html`<span class="tag tag--state">${READER_STATES[st.id]?.label}</span>`)}
@@ -85,7 +100,7 @@ export function understandingView(ctx, { signals, states, strategies, typed, und
       const def = READER_STATES[st.id];
       const cur = strategies[st.id] ?? 'lift';
       return html`<div class="ask" role="group" aria-label="${def.label}">
-        <span>${def.label}. کتاب چی‌کار کنه؟</span>
+        <span>${def.label}. ${ctx.section === 'novels' ? 'ناول' : 'کتاب'} چی‌کار کنه؟</span>
         <div class="ask__opts">
           ${['lift', 'match'].map((k) => html`<button type="button" class="segment__opt" data-act="strategy" data-state-id="${st.id}" data-strategy="${k}" aria-checked="${cur === k}" role="radio">${def[k].label}</button>`)}
         </div>
@@ -96,7 +111,21 @@ export function understandingView(ctx, { signals, states, strategies, typed, und
 
 /* ---------- Results ---------- */
 
+function formatVolumeCount(book) {
+  if (book.chapters) return `${fa(book.chapters.toLocaleString('en-US'))} چپتر`;
+  if (book.volumes) return `${fa(book.volumes)} جلد`;
+  return '';
+}
+
 function bookMeta(book, ctx) {
+  if (book.origin) {
+    const status = book.status ? (ctx.vocab.statuses?.byId.get(book.status)?.label ?? '') : '';
+    return [
+      status,
+      formatVolumeCount(book),
+      book.year ? fa(book.year) : '',
+    ].filter(Boolean).join(' · ');
+  }
   return [
     book.pages ? `${fa(book.pages)} صفحه` : '',
     book.pages ? readingTime(book.pages, ctx.pph) : '',
@@ -104,7 +133,18 @@ function bookMeta(book, ctx) {
   ].filter(Boolean).join(' · ');
 }
 
+function novelBadges(book, ctx) {
+  if (!book.origin) return '';
+  const orig = ctx.vocab.origins?.byId.get(book.origin)?.label ?? book.origin;
+  const adapts = (book.adaptations ?? []).slice(0, 2).map((a) => ctx.vocab.adaptations?.byId.get(a)?.label ?? a);
+  return html`<div class="meta-badges">
+    <span class="badge badge--origin badge--${book.origin}">${orig}</span>
+    ${adapts.map((a) => html`<span class="badge">${a}</span>`)}
+  </div>`;
+}
+
 function people(book) {
+  if (book.origin) return book.author;
   const t = book.translators.length ? ` · ترجمه‌ی ${listFa(book.translators)}` : (!book.translated ? ' · ترجمه‌ی فارسی‌اش رو پیدا نکردم' : '');
   return `${book.author}${t}`;
 }
@@ -134,7 +174,10 @@ export function cardView(item, ctx) {
   return html`<article class="card" data-book="${b.id}">
     <button type="button" class="card__cover" data-act="open" data-id="${b.id}" aria-label="جزئیات ${b.title}">${coverView(b, ctx.summaryFor(b.id))}</button>
     <div class="card__body">
-      ${item.fit ? html`<span class="fit fit--${item.fit}">${FIT_LABELS[item.fit]}</span>` : ''}
+      <div class="card__top">
+        ${item.fit ? html`<span class="fit fit--${item.fit}">${FIT_LABELS[item.fit]}</span>` : ''}
+        ${novelBadges(b, ctx)}
+      </div>
       <h3 class="card__title"><button type="button" data-act="open" data-id="${b.id}">${b.title}</button></h3>
       <p class="card__people">${people(b)}</p>
       <p class="card__meta">${bookMeta(b, ctx)}</p>
@@ -150,7 +193,10 @@ export function topPickView(item, ctx) {
   return html`<article class="top" data-book="${b.id}">
     <button type="button" class="top__cover" data-act="open" data-id="${b.id}" aria-label="جزئیات ${b.title}">${coverView(b, sum, { size: 'lg', eager: true })}</button>
     <div class="top__body">
-      ${item.fit ? html`<span class="fit fit--${item.fit}">${FIT_LABELS[item.fit]}</span>` : ''}
+      <div class="card__top">
+        ${item.fit ? html`<span class="fit fit--${item.fit}">${FIT_LABELS[item.fit]}</span>` : ''}
+        ${novelBadges(b, ctx)}
+      </div>
       <h3 class="top__title display">${b.title}</h3>
       <p class="card__people">${people(b)}</p>
       <p class="card__meta">${bookMeta(b, ctx)}</p>
@@ -172,14 +218,18 @@ const STORY_ICON = html`<svg width="18" height="18" viewBox="0 0 24 24" fill="no
 
 export function tonightView(book, ctx, { label }) {
   if (!book) return '';
+  const isNovel = Boolean(book.origin);
   const moods = book.moods.slice(0, 3).map((m) => ctx.vocab.moods.byId.get(m)?.label ?? m);
+  const extra = isNovel
+    ? [ctx.vocab.origins?.byId.get(book.origin)?.label, formatVolumeCount(book)].filter(Boolean).join(' · ')
+    : (book.pages ? `${fa(book.pages)} صفحه` : '');
   return html`<div class="tonight__card">
     <button type="button" class="tonight__cover" data-act="open" data-id="${book.id}" aria-label="جزئیات ${book.title}">${coverView(book, ctx.summaryFor(book.id), { size: 'sm', eager: true })}</button>
     <div class="tonight__body">
-      <p class="tonight__kicker"><span class="tonight__moon" aria-hidden="true">☾</span> کتاب امشب${label ? html` · <span>${label}</span>` : ''}</p>
+      <p class="tonight__kicker"><span class="tonight__moon" aria-hidden="true">☾</span> ${isNovel ? 'ناول امشب' : 'کتاب امشب'}${label ? html` · <span>${label}</span>` : ''}</p>
       <h2 class="tonight__title display">${book.title}</h2>
       <p class="card__people">${people(book)}</p>
-      <p class="tonight__moods">${moods.join(' · ')}${book.pages ? ` · ${fa(book.pages)} صفحه` : ''}</p>
+      <p class="tonight__moods">${[...moods, extra].filter(Boolean).join(' · ')}</p>
       <div class="tonight__actions">
         <button type="button" class="btn btn--primary" data-act="open" data-id="${book.id}">بیشتر درباره‌ش</button>
         <button type="button" class="btn btn--ghost" data-act="story" data-id="${book.id}" data-kind="tonight">${STORY_ICON}<span>کارت استوری</span></button>
@@ -198,12 +248,14 @@ export function summaryPreview(state) {
 
 export function resultsView(result, ctx, { pageSize, shown }) {
   const { items, total, hasQuery, relax } = result;
+  const isNovels = ctx.section === 'novels';
+  const unit = isNovels ? 'ناول' : 'کتاب';
   if (!items.length) {
     return html`<div class="empty">
-      <h2 class="display">با این ترکیب، کتابی تو قفسه نداریم</h2>
+      <h2 class="display">با این ترکیب، ${isNovels ? 'ناولی' : 'کتابی'} تو قفسه نداریم</h2>
       <p>یکی از محدودیت‌ها رو بردار تا گزینه‌ها برگردن.</p>
       <div class="empty__actions">
-        ${relax ? html`<button type="button" class="btn btn--primary" data-act="relax" data-key="${relax.key}">برداشتن ${relaxLabel(relax.key, ctx)} (${fa(relax.count)} کتاب برمی‌گرده)</button>` : ''}
+        ${relax ? html`<button type="button" class="btn btn--primary" data-act="relax" data-key="${relax.key}">برداشتن ${relaxLabel(relax.key, ctx)} (${fa(relax.count)} ${unit} برمی‌گرده)</button>` : ''}
         <button type="button" class="btn btn--ghost" data-act="reset">از اول</button>
       </div>
     </div>`;
@@ -215,8 +267,8 @@ export function resultsView(result, ctx, { pageSize, shown }) {
   return html`
     <header class="results__head">
       <div>
-        <h2 class="results__title display">${hasQuery ? 'پیشنهادهای امشب' : 'از قفسه‌ی فراگمان'}</h2>
-        <p class="results__sub">${hasQuery ? `بین ${fa(ctx.total)} کتاب گشتم؛ ${fa(total)} تا با خواسته‌ت جور درمیاد.` : 'هنوز چیزی نگفتی؛ این‌ها نقطه‌ی شروع خوبی‌ان.'}</p>
+        <h2 class="results__title display">${hasQuery ? 'پیشنهادهای امشب' : (isNovels ? 'قفسه‌ی ناول‌های شرقی' : 'از قفسه‌ی فراگمان')}</h2>
+        <p class="results__sub">${hasQuery ? `بین ${fa(ctx.total)} ${unit} گشتم؛ ${fa(total)} تا با خواسته‌ت جور درمیاد.` : (isNovels ? `از بین ${fa(ctx.total)} ناول معروف چینی، کره‌ای و ژاپنی — این‌ها نقطه‌ی شروع خوبی‌ان.` : 'هنوز چیزی نگفتی؛ این‌ها نقطه‌ی شروع خوبی‌ان.')}</p>
       </div>
       <div class="results__tools">
         <button type="button" class="btn btn--ghost" data-act="shuffle">${icon('shuffle', { size: 18 })}<span>یه سری دیگه</span></button>
@@ -227,15 +279,17 @@ export function resultsView(result, ctx, { pageSize, shown }) {
       ${relax ? html`<button type="button" class="link-btn" data-act="relax" data-key="${relax.key}">برداشتن ${relaxLabel(relax.key, ctx)}</button>` : ''}</p>` : ''}
     ${hasQuery ? topPickView(first, ctx) : ''}
     ${visible.length ? html`<div class="grid">${visible.map((it) => cardView(it, ctx))}</div>` : ''}
-    ${list.length > shown ? html`<div class="more"><button type="button" class="btn btn--ghost" data-act="more">${fa(Math.min(pageSize, list.length - shown))} کتاب دیگه</button></div>` : ''}
+    ${list.length > shown ? html`<div class="more"><button type="button" class="btn btn--ghost" data-act="more">${fa(Math.min(pageSize, list.length - shown))} ${unit} دیگه</button></div>` : ''}
   `;
 }
 
 /* ---------- Book sheet ---------- */
 
 export function sheetView(book, ctx, { item, similar, summary, expanded }) {
-  const label = (g, id) => ctx.vocab[g].byId.get(id)?.label ?? id;
+  const label = (g, id) => ctx.vocab[g]?.byId.get(id)?.label ?? id;
+  const isNovel = Boolean(book.origin);
   const series = book.series ? `${book.series}${book.series_number ? ` · جلد ${fa(book.series_number)}` : ''}` : '';
+  const volText = formatVolumeCount(book);
   return html`
     <div class="sheet__grid">
       <div class="sheet__side">
@@ -246,20 +300,27 @@ export function sheetView(book, ctx, { item, similar, summary, expanded }) {
         <h2 id="sheet-title" class="sheet__title display">${book.title}</h2>
         ${book.title_en ? html`<p class="sheet__en" dir="ltr" lang="en">${book.title_en}${book.author_en ? ` — ${book.author_en}` : ''}</p>` : ''}
         <p class="card__people">${people(book)}</p>
+        ${book.alt_titles?.length ? html`<p class="sheet__note muted">نام‌های دیگر: ${book.alt_titles.slice(0, 4).join(' · ')}</p>` : ''}
         ${book.note ? html`<p class="sheet__note muted">${book.note}</p>` : ''}
         <dl class="facts">
-          ${book.pages ? html`<div><dt>حجم</dt><dd>${fa(book.pages)} صفحه · ${readingTime(book.pages, ctx.pph)}<small>${readingPlan(book.pages, ctx.pph)}</small></dd></div>` : ''}
+          ${isNovel && book.origin ? html`<div><dt>خاستگاه</dt><dd>${label('origins', book.origin)}</dd></div>` : ''}
+          ${isNovel && book.status ? html`<div><dt>وضعیت</dt><dd>${label('statuses', book.status)}</dd></div>` : ''}
+          ${isNovel && volText ? html`<div><dt>حجم</dt><dd>${volText}</dd></div>` : ''}
+          ${!isNovel && book.pages ? html`<div><dt>حجم</dt><dd>${fa(book.pages)} صفحه · ${readingTime(book.pages, ctx.pph)}<small>${readingPlan(book.pages, ctx.pph)}</small></dd></div>` : ''}
           ${book.year ? html`<div><dt>سال انتشار</dt><dd>${fa(book.year)}</dd></div>` : ''}
           ${series ? html`<div><dt>مجموعه</dt><dd>${series}</dd></div>` : ''}
-          <div><dt>مخاطب</dt><dd>${label('audiences', book.audience)}${book.format !== 'novel' ? ` · ${label('formats', book.format)}` : ''}</dd></div>
+          ${isNovel && book.adaptations?.length ? html`<div><dt>اقتباس‌ها</dt><dd>${book.adaptations.map((a) => label('adaptations', a)).join('، ')}</dd></div>` : ''}
+          <div><dt>${isNovel ? 'قالب و مخاطب' : 'مخاطب'}</dt><dd>${label('audiences', book.audience)}${(isNovel || book.format !== 'novel') ? ` · ${label('formats', book.format)}` : ''}</dd></div>
         </dl>
         ${item?.reasons?.length ? html`<p class="why why--sheet"><span class="why__plus">چرا این: ${item.reasons.join(' · ')}</span>${item.caveats?.length ? html`<span class="why__minus">${item.caveats.join(' · ')}</span>` : ''}</p>` : ''}
         ${book.quote ? html`<blockquote class="quote">${book.quote}</blockquote>` : ''}
         <section class="sheet__summary" aria-label="خلاصه">${sheetSummary(summary, expanded)}</section>
         <div class="tagline">
+          ${isNovel && book.origin ? html`<button type="button" class="tag tag--link" data-act="pick" data-kind="origin" data-id="${book.origin}">${label('origins', book.origin)}</button>` : ''}
           ${book.genres.map((g) => html`<button type="button" class="tag tag--link" data-act="pick" data-kind="genre" data-id="${g}">${label('genres', g)}</button>`)}
           ${book.moods.map((m) => html`<button type="button" class="tag tag--link" data-act="pick" data-kind="mood" data-id="${m}">${label('moods', m)}</button>`)}
           ${book.themes.map((t) => html`<button type="button" class="tag tag--link" data-act="pick" data-kind="theme" data-id="${t}">${label('themes', t)}</button>`)}
+          ${(book.adaptations ?? []).map((a) => html`<button type="button" class="tag tag--link" data-act="pick" data-kind="adaptation" data-id="${a}">${label('adaptations', a)}</button>`)}
         </div>
         ${book.films.length ? html`<p class="sheet__line"><strong>اگه این‌ها رو دیدی و دوست داشتی:</strong> ${book.films.join('، ')}</p>` : ''}
         ${book.awards.length ? html`<p class="sheet__line"><strong>جایزه‌ها:</strong> ${book.awards.join('، ')}</p>` : ''}
@@ -267,7 +328,7 @@ export function sheetView(book, ctx, { item, similar, summary, expanded }) {
         <div class="sheet__actions">
           <button type="button" class="btn btn--primary" data-act="like-this" data-id="${book.id}">شبیه این پیدا کن</button>
           <button type="button" class="btn btn--ghost" data-act="story" data-id="${book.id}" data-kind="book">${STORY_ICON}<span>کارت استوری</span></button>
-          <button type="button" class="btn btn--ghost" data-act="copy-book" data-id="${book.id}">${icon('link', { size: 18 })}<span>لینک این کتاب</span></button>
+          <button type="button" class="btn btn--ghost" data-act="copy-book" data-id="${book.id}">${icon('link', { size: 18 })}<span>${isNovel ? 'لینک این ناول' : 'لینک این کتاب'}</span></button>
           ${book.link ? html`<a class="btn btn--ghost" href="${book.link}" target="_blank" rel="noopener">${icon('book', { size: 18 })}<span>تهیه‌ی کتاب</span></a>` : ''}
         </div>
       </div>
@@ -299,17 +360,18 @@ export function sheetSummary(state, expanded) {
 const SHELF_TABS = [['want', 'می‌خوام بخونم'], ['read', 'خوندم'], ['nope', 'کنار گذاشتم']];
 
 export function shelfView(ctx, { tab, lists, pph }) {
+  const lookup = ctx.allById ?? ctx.byId;
   const ids = lists[tab] ?? [];
-  const books = ids.map((id) => ctx.byId.get(id)).filter(Boolean);
+  const books = ids.map((id) => lookup.get(id)).filter(Boolean);
   return html`
     <div class="tabs" role="tablist">
-      ${SHELF_TABS.map(([id, label]) => html`<button type="button" role="tab" class="tabs__tab" data-act="shelf-tab" data-tab="${id}" aria-selected="${tab === id}">${label} <span class="chip__count">${fa((lists[id] ?? []).filter((x) => ctx.byId.has(x)).length)}</span></button>`)}
+      ${SHELF_TABS.map(([id, label]) => html`<button type="button" role="tab" class="tabs__tab" data-act="shelf-tab" data-tab="${id}" aria-selected="${tab === id}">${label} <span class="chip__count">${fa((lists[id] ?? []).filter((x) => lookup.has(x)).length)}</span></button>`)}
     </div>
     ${books.length ? html`<ul class="shelf-list">${books.map((b) => html`<li>
-        <button type="button" class="shelf-list__book" data-act="open" data-id="${b.id}">${coverView(b, ctx.summaryFor(b.id), { size: 'sm' })}<span><strong>${b.title}</strong><small>${b.author}</small></span></button>
+        <button type="button" class="shelf-list__book" data-act="open" data-id="${b.id}">${coverView(b, ctx.summaryFor(b.id), { size: 'sm' })}<span><strong>${b.title}</strong><small>${b.author}${b.origin ? ' · ناول شرقی' : ''}</small></span></button>
         <button type="button" class="btn btn--ghost btn--quiet" data-act="unshelf" data-id="${b.id}">${icon('close', { size: 16 })}<span>${tab === 'nope' ? 'برگردون به پیشنهادها' : 'حذف'}</span></button>
       </li>`)}</ul>`
-      : html`<p class="muted shelf-empty">${tab === 'want' ? 'هنوز چیزی اینجا نیست. روی «می‌خوام بخونم» هر کتاب بزن تا این‌جا بمونه.' : tab === 'read' ? 'کتاب‌هایی که خوندی این‌جا می‌آد و دیگه پیشنهاد داده نمی‌شن.' : 'کتاب‌هایی که کنار بذاری این‌جا می‌آد و هر وقت خواستی برمی‌گردونیشون.'}</p>`}
+      : html`<p class="muted shelf-empty">${tab === 'want' ? 'هنوز چیزی اینجا نیست. روی «می‌خوام بخونم» هر کتاب یا ناول بزن تا این‌جا بمونه.' : tab === 'read' ? 'آثاری که خوندی این‌جا می‌آد و دیگه پیشنهاد داده نمی‌شن.' : 'آثاری که کنار بذاری این‌جا می‌آد و هر وقت خواستی برمی‌گردونیشون.'}</p>`}
     <div class="shelf-settings">
       <label>سرعت خوندنم
         <select data-act="pph">
@@ -327,9 +389,12 @@ export function shelfView(ctx, { tab, lists, pph }) {
 /* ---------- Surprise ---------- */
 
 export function surpriseView(book, ctx, { revealed }) {
-  if (!book) return html`<p class="muted">همه‌ی کتاب‌های مناسب رو یا خوندی یا کنار گذاشتی. فیلترها رو سبک‌تر کن.</p>`;
-  const label = (g, id) => ctx.vocab[g].byId.get(id)?.label ?? id;
-  const size = !book.pages ? '' : book.pages < 300 ? 'کوتاه' : book.pages < 500 ? 'متوسط' : 'بلند';
+  const isNovels = ctx.section === 'novels';
+  if (!book) return html`<p class="muted">همه‌ی ${isNovels ? 'ناول‌های' : 'کتاب‌های'} مناسب رو یا خوندی یا کنار گذاشتی. فیلترها رو سبک‌تر کن.</p>`;
+  const label = (g, id) => ctx.vocab[g]?.byId.get(id)?.label ?? id;
+  const size = book.origin
+    ? formatVolumeCount(book)
+    : (!book.pages ? '' : book.pages < 300 ? 'کوتاه' : book.pages < 500 ? 'متوسط' : 'بلند');
   return html`
     <div class="blind ${revealed ? 'is-revealed' : ''}">
       <div class="blind__wrap">
@@ -339,6 +404,7 @@ export function surpriseView(book, ctx, { revealed }) {
       <div class="blind__clues">
         ${book.quote ? html`<blockquote class="quote">${book.quote}</blockquote>` : ''}
         <ul class="clues">
+          ${book.origin ? html`<li><span>خاستگاه</span>${label('origins', book.origin)}</li>` : ''}
           <li><span>حس‌وحال</span>${book.moods.slice(0, 3).map((m) => label('moods', m)).join('، ')}</li>
           <li><span>مایه‌ها</span>${book.themes.slice(0, 3).map((t) => label('themes', t)).join('، ')}</li>
           ${size ? html`<li><span>حجم</span>${size}</li>` : ''}
@@ -346,7 +412,7 @@ export function surpriseView(book, ctx, { revealed }) {
         ${revealed ? html`<h3 class="display blind__title">${book.title}</h3><p class="card__people">${people(book)}</p>` : ''}
         <div class="sheet__actions">
           ${revealed ? html`<button type="button" class="btn btn--primary" data-act="open" data-id="${book.id}">بیشتر درباره‌ش</button>`
-            : html`<button type="button" class="btn btn--primary" data-act="reveal">نشونم بده چه کتابیه</button>`}
+            : html`<button type="button" class="btn btn--primary" data-act="reveal">${isNovels ? 'نشونم بده چه ناولیه' : 'نشونم بده چه کتابیه'}</button>`}
           <button type="button" class="btn btn--ghost" data-act="another">${icon('dice', { size: 18 })}<span>یکی دیگه</span></button>
         </div>
       </div>

@@ -19,6 +19,21 @@ const PALETTES = {
   weird: ['#1d2621', '#4f6b4a'],
   'magical-realism': ['#24203a', '#6f5f9a'],
   sf: ['#16243a', '#46648a'],
+  // Eastern novel palettes (ink, jade, vermilion, amber — night-library harmonic)
+  xianxia: ['#132c29', '#3b7a6c'],
+  xuanhuan: ['#1b2338', '#526791'],
+  wuxia: ['#361b1e', '#84433a'],
+  isekai: ['#1a2936', '#4a7a8c'],
+  'system-litrpg': ['#152436', '#3c6e8f'],
+  'hunter-dungeon': ['#1b1f33', '#4e5f87'],
+  regression: ['#28221a', '#7c653c'],
+  'dark-eastern': ['#241418', '#682c34'],
+  'unlimited-flow': ['#1f1b2b', '#5d4766'],
+  'court-otome': ['#321f24', '#8a5559'],
+  danmei: ['#2d1d27', '#7c4e64'],
+  'eastern-sf': ['#142636', '#3e6e85'],
+  'mystery-psych': ['#1b222e', '#4f5f78'],
+  'slice-of-life': ['#242c22', '#647d58'],
 };
 
 export function palette(book) {

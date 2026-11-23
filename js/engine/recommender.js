@@ -11,8 +11,10 @@
  */
 
 const MOOD_POSITION_WEIGHTS = [1, 0.85, 0.72, 0.62, 0.55, 0.5];
-const WEIGHTS = { mood: 3, seed: 3, genre: 2, theme: 2, author: 2.2, format: 1, pages: 1, pace: 1, darkness: 1.2, complexity: 1 };
+const WEIGHTS = { mood: 3, seed: 3, genre: 2, theme: 2, author: 2.2, format: 1, pages: 1, chapters: 1, volumes: 1, pace: 1, darkness: 1.2, complexity: 1, origin: 1.2, status: 1, adaptation: 1 };
 const PAGE_BUCKETS = { short: { max: 300 }, medium: { min: 250, max: 500 }, long: { min: 450 }, 'not-short': { min: 220 }, 'not-long': { max: 480 } };
+const CHAPTER_BUCKETS = { short: { max: 250 }, medium: { min: 180, max: 750 }, long: { min: 650 }, 'not-short': { min: 180 }, 'not-long': { max: 700 } };
+const VOLUME_BUCKETS = { short: { max: 6 }, medium: { min: 5, max: 16 }, long: { min: 15 }, 'not-short': { min: 5 }, 'not-long': { max: 15 } };
 const PACE_TARGETS = { slow: 2, steady: 3, fast: 4.5, 'not-fast': 2.5, 'not-slow': 3.8 };
 const DARKNESS_RANGES = { light: [1, 2], 'not-dark': [1, 3], dark: [4, 5], 'not-light': [3, 5] };
 const COMPLEXITY_RANGES = { easy: [1, 3], deep: [4, 5], 'not-easy': [3, 5], 'not-deep': [1, 3] };
@@ -49,7 +51,7 @@ export class Recommender {
       const genres = new Set(b.genres);
       for (const g of b.genres) if (parent.has(g)) genres.add(parent.get(g));
       const moods = new Map(b.moods.map((m, i) => [m, MOOD_POSITION_WEIGHTS[Math.min(i, MOOD_POSITION_WEIGHTS.length - 1)]]));
-      const p = { genres, moods, themes: new Set(b.themes), warnings: new Set(b.warnings) };
+      const p = { genres, moods, themes: new Set(b.themes), warnings: new Set(b.warnings), adaptations: new Set(b.adaptations ?? []) };
       this.profiles.set(b.id, p);
       for (const key of [...[...genres].map((g) => `g:${g}`), ...b.themes.map((t) => `t:${t}`)]) df.set(key, (df.get(key) ?? 0) + 1);
     }
@@ -61,6 +63,7 @@ export class Recommender {
       for (const g of p.genres) vec.set(`g:${g}`, 0.9 * idf(`g:${g}`));
       for (const t of p.themes) vec.set(`t:${t}`, 1.1 * idf(`t:${t}`));
       for (const [m, w] of p.moods) vec.set(`m:${m}`, 1.3 * w);
+      if (b.origin) vec.set(`o:${b.origin}`, 0.45);
       for (const d of ['pace', 'darkness', 'complexity']) if (b[d] != null) vec.set(`d:${d}`, ((b[d] - 3) / 2) * 0.8);
       let norm = 0;
       for (const v of vec.values()) norm += v * v;
@@ -108,11 +111,20 @@ export class Recommender {
   aggregate(signals) {
     const q = {
       moods: new Map(), genres: new Map(), themes: new Map(), formats: new Map(),
+      origins: new Map(), statuses: new Map(), adaptations: new Map(),
       warnings: new Set(), seeds: new Map(), films: new Map(), authors: new Set(),
-      pages: null, pace: null, darkness: null, complexity: null, audience: null, translatedOnly: false,
+      pages: null, chapters: null, volumes: null, pace: null, darkness: null, complexity: null, audience: null, translatedOnly: false,
       active: 0,
     };
     const addTo = (map, id, v) => map.set(id, (map.get(id) ?? 0) + v);
+    const parseBound = (prev, id, hardDefault) => {
+      const [kind, num] = String(id).split(':');
+      const n = Number(num);
+      const base = prev?.explicit ? prev : {};
+      if (kind === 'max') return { ...base, max: n, hard: hardDefault !== false, explicit: true, w: 1 };
+      if (kind === 'min') return { ...base, min: n, hard: hardDefault !== false, explicit: true, w: 1 };
+      return { target: n, min: Math.round(n * 0.7), max: Math.round(n * 1.3), hard: false, explicit: true, w: 1 };
+    };
     for (const s of signals) {
       const v = (s.polarity ?? 1) * (s.strength ?? 1);
       switch (s.kind) {
@@ -120,6 +132,9 @@ export class Recommender {
         case 'genre': addTo(q.genres, s.id, v); break;
         case 'theme': addTo(q.themes, s.id, v); break;
         case 'format': addTo(q.formats, s.id, v); break;
+        case 'origin': addTo(q.origins, s.id, v); break;
+        case 'status': addTo(q.statuses, s.id, v); break;
+        case 'adaptation': addTo(q.adaptations, s.id, v); break;
         case 'warning': q.warnings.add(s.id); break;
         case 'seed': addTo(q.seeds, s.id, v); break;
         case 'film': addTo(q.films, s.id, v); break;
@@ -127,18 +142,12 @@ export class Recommender {
         case 'translated': q.translatedOnly = true; break;
         case 'audience': q.audience = s.id; break;
         case 'length':
-          // An explicit page count («زیر ۳۰۰ صفحه») beats a vague length word or a state's hint.
+          // An explicit page/chapter/volume count beats a vague length word or a state's hint.
           if (!q.pages?.hard && !q.pages?.explicit) q.pages = { ...PAGE_BUCKETS[s.id], hard: false, id: s.id, w: s.strength ?? 1 };
           break;
-        case 'pages': {
-          const [kind, num] = String(s.id).split(':');
-          const n = Number(num);
-          const prev = q.pages?.explicit ? q.pages : {};
-          if (kind === 'max') q.pages = { ...prev, max: n, hard: s.hard !== false, explicit: true, w: 1 };
-          else if (kind === 'min') q.pages = { ...prev, min: n, hard: s.hard !== false, explicit: true, w: 1 };
-          else q.pages = { target: n, min: Math.round(n * 0.7), max: Math.round(n * 1.3), hard: false, explicit: true, w: 1 };
-          break;
-        }
+        case 'pages': q.pages = parseBound(q.pages, s.id, s.hard); break;
+        case 'chapters': q.chapters = parseBound(q.chapters, s.id, s.hard); break;
+        case 'volumes': q.volumes = parseBound(q.volumes, s.id, s.hard); break;
         case 'pace': q.pace = { target: PACE_TARGETS[s.id] ?? 3, id: s.id, w: s.strength ?? 1 }; break;
         case 'darkness': q.darkness = { range: DARKNESS_RANGES[s.id] ?? [1, 5], id: s.id, w: s.strength ?? 1 }; break;
         case 'complexity': q.complexity = { range: COMPLEXITY_RANGES[s.id] ?? [1, 5], id: s.id, w: s.strength ?? 1 }; break;
@@ -161,6 +170,25 @@ export class Recommender {
       if (q.pages.max && book.pages > q.pages.max) return 'pages';
       if (q.pages.min && book.pages < q.pages.min) return 'pages';
     }
+    if (q.chapters?.hard) {
+      if (book.chapters == null) return 'chapters';
+      if (q.chapters.max && book.chapters > q.chapters.max) return 'chapters';
+      if (q.chapters.min && book.chapters < q.chapters.min) return 'chapters';
+    }
+    if (q.volumes?.hard) {
+      if (book.volumes == null) return 'volumes';
+      if (q.volumes.max && book.volumes > q.volumes.max) return 'volumes';
+      if (q.volumes.min && book.volumes < q.volumes.min) return 'volumes';
+    }
+    const posOrigins = [...q.origins].filter(([, v]) => v > 0).map(([k]) => k);
+    if (posOrigins.length && !posOrigins.includes(book.origin)) return 'origin';
+    for (const [o, v] of q.origins) if (v <= -1 && book.origin === o) return `origin:${o}`;
+    const posStatuses = [...q.statuses].filter(([, v]) => v > 0).map(([k]) => k);
+    if (posStatuses.length && !posStatuses.includes(book.status)) return 'status';
+    for (const [st, v] of q.statuses) if (v <= -1 && book.status === st) return `status:${st}`;
+    const posAdapt = [...q.adaptations].filter(([, v]) => v > 0).map(([k]) => k);
+    if (posAdapt.length && !posAdapt.some((a) => p.adaptations.has(a))) return 'adaptation';
+    for (const [a, v] of q.adaptations) if (v <= -1 && p.adaptations.has(a)) return `adaptation:${a}`;
     for (const [g, v] of q.genres) if (v <= -1 && p.genres.has(g)) return `genre:${g}`;
     for (const [t, v] of q.themes) if (v <= -1 && p.themes.has(t)) return `theme:${t}`;
     for (const [m, v] of q.moods) if (v <= -1.3 && (p.moods.get(m) ?? 0) >= 0.85) return `mood:${m}`;
@@ -171,7 +199,7 @@ export class Recommender {
     const parts = [];
     const reasons = [];
     const caveats = [];
-    const label = (group, id) => this.vocab[group].byId.get(id)?.label ?? id;
+    const label = (group, id) => this.vocab[group]?.byId.get(id)?.label ?? id;
     let penalty = 0;
 
     // Moods: weighted coverage with partial credit for neighbouring moods.
@@ -209,6 +237,19 @@ export class Recommender {
     setScore(q.genres, (g) => p.genres.has(g), 'genres', 'genre');
     setScore(q.themes, (t) => p.themes.has(t), 'themes', 'theme', 1.1);
     setScore(q.formats, (f) => book.format === f, 'formats', 'format');
+    if ([...q.origins].some(([, v]) => v > 0) && book.origin) {
+      parts.push(['origin', 1]);
+      reasons.push({ w: 1.5, text: label('origins', book.origin) });
+    }
+    if ([...q.statuses].some(([, v]) => v > 0) && book.status) {
+      parts.push(['status', 1]);
+      reasons.push({ w: 1.3, text: label('statuses', book.status) });
+    }
+    const posAdapt = [...q.adaptations].filter(([, v]) => v > 0);
+    if (posAdapt.length) {
+      const hit = posAdapt.find(([a]) => p.adaptations.has(a));
+      if (hit) { parts.push(['adaptation', 1]); reasons.push({ w: 1.4, text: `اقتباس ${label('adaptations', hit[0])}` }); }
+    }
 
     // Seeds: similar to books (or films) the reader mentioned.
     const pos = [...q.seeds].filter(([, v]) => v > 0);
@@ -244,19 +285,31 @@ export class Recommender {
       if (hit) reasons.push({ w: 5, text: `از ${book.author}` });
     }
 
-    if (q.pages) {
-      const { min, max, target } = q.pages;
+    const scoreSize = (val, spec, scale, unit, kind) => {
+      if (!spec) return;
+      const { min, max, target } = spec;
       let s = 0.6;
-      if (book.pages != null) {
-        if (target) s = Math.exp(-Math.abs(book.pages - target) / (0.35 * target));
-        else if (max && book.pages > max) s = Math.exp(-(book.pages - max) / 160);
-        else if (min && book.pages < min) s = Math.exp(-(min - book.pages) / 160);
+      if (val != null) {
+        if (target) s = Math.exp(-Math.abs(val - target) / (0.35 * target));
+        else if (max && val > max) s = Math.exp(-(val - max) / scale);
+        else if (min && val < min) s = Math.exp(-(min - val) / scale);
         else s = 1;
-        if (s >= 0.95 && max && book.pages <= max) reasons.push({ w: 1.2, text: `${book.pages} صفحه` });
-        if (s < 0.6) caveats.push(book.pages > (max ?? target ?? 0) ? `بلندتر از چیزی که خواستی (${book.pages} صفحه)` : `کوتاه‌تر از چیزی که خواستی (${book.pages} صفحه)`);
+        if (s >= 0.95 && max && val <= max) reasons.push({ w: 1.2, text: `${val} ${unit}` });
+        if (s < 0.6) caveats.push(val > (max ?? target ?? 0) ? `بلندتر از چیزی که خواستی (${val} ${unit})` : `کوتاه‌تر از چیزی که خواستی (${val} ${unit})`);
       }
-      parts.push(['pages', s, q.pages.w]);
+      parts.push([kind, s, spec.w]);
+    };
+    if (q.pages) {
+      // If the length signal is a bucket (short/medium/long) and this is an Eastern novel, score by chapters or volumes.
+      if (q.pages.id && book.pages == null && (book.chapters != null || book.volumes != null)) {
+        if (book.chapters != null) scoreSize(book.chapters, { ...CHAPTER_BUCKETS[q.pages.id], w: q.pages.w }, 320, 'چپتر', 'pages');
+        else scoreSize(book.volumes, { ...VOLUME_BUCKETS[q.pages.id], w: q.pages.w }, 8, 'جلد', 'pages');
+      } else {
+        scoreSize(book.pages, q.pages, 160, 'صفحه', 'pages');
+      }
     }
+    scoreSize(book.chapters, q.chapters, 320, 'چپتر', 'chapters');
+    scoreSize(book.volumes, q.volumes, 8, 'جلد', 'volumes');
     if (q.pace) {
       const s = book.pace == null ? 0.6 : Math.max(0, 1 - Math.abs(book.pace - q.pace.target) / 2.5);
       if (s >= 0.8 && q.pace.id === 'fast') reasons.push({ w: 1, text: 'ریتم تند' });
